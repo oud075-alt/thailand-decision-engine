@@ -6,31 +6,46 @@ export default function Home() {
   const [text, setText] = useState("");
   const [platform, setPlatform] = useState("Facebook");
   const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
-    const res = await fetch("/api/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text, platform }),
-    });
+    if (!text.trim()) {
+      setResult("กรุณาใส่ข้อความก่อน");
+      return;
+    }
 
-    const data = await res.json();
+    setLoading(true);
+    setResult("กำลังวิเคราะห์โพสต์...");
 
-    console.log("API RESPONSE:", data); // debug
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text, platform }),
+      });
 
-    setResult(data.result || "ไม่มีผลลัพธ์");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResult(data.error || "เกิดข้อผิดพลาด");
+        return;
+      }
+
+      setResult(data.result || "ไม่มีผลลัพธ์");
+    } catch (error) {
+      setResult("เชื่อมต่อ AI ไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main style={{ padding: 20 }}>
       <h2>จะโพสต์ที่ไหน</h2>
 
-      <select
-        value={platform}
-        onChange={(e) => setPlatform(e.target.value)}
-      >
+      <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
         <option>Facebook</option>
         <option>TikTok</option>
         <option>Instagram</option>
@@ -45,20 +60,26 @@ export default function Home() {
 
       <button
         onClick={handleAnalyze}
+        disabled={loading}
         style={{
           marginTop: 10,
           width: "100%",
           padding: 10,
-          background: "black",
+          background: loading ? "#666" : "black",
           color: "white",
+          cursor: loading ? "not-allowed" : "pointer",
         }}
       >
-        วิเคราะห์โพสต์ {platform}
+        {loading ? "กำลังวิเคราะห์..." : `วิเคราะห์โพสต์ ${platform}`}
       </button>
 
-      <h3 style={{ marginTop: 20 }}>
-        ผลวิเคราะห์สำหรับ {platform}
-      </h3>
+      {loading && (
+        <div style={{ marginTop: 12, fontWeight: "bold" }}>
+          AI กำลังวิเคราะห์โพสต์ของคุณ...
+        </div>
+      )}
+
+      <h3 style={{ marginTop: 20 }}>ผลวิเคราะห์สำหรับ {platform}</h3>
 
       <pre
         style={{
