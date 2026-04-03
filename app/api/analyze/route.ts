@@ -9,44 +9,59 @@ export async function POST(req: Request) {
     });
 
     const prompt = `
-คุณคือผู้เชี่ยวชาญด้านคอนเทนต์โซเชียล
+คุณคือผู้เชี่ยวชาญด้านการเขียนคอนเท้นสำหรับ ${platform}
 
-วิเคราะห์โพสต์นี้สำหรับ ${platform}
+วิเคราะห์โพสต์นี้:
 
-โพสต์:
-${text}
+"${text}"
 
-ให้วิเคราะห์:
+ให้ตอบเป็น 4 ส่วน:
+
 1. Hook ดีไหม
 2. เนื้อหาเข้าใจง่ายไหม
 3. จุดขายคืออะไร
 4. CTA ดีไหม
 
-ตอบแบบสั้น กระชับ อ่านง่าย
+จากนั้นเพิ่มส่วนที่ 5:
+
+5. ✨ ตัวอย่างการปรับปรุง (3 แบบ)
+- เขียนโพสต์ใหม่ 3 แบบ
+- แต่ละแบบต้อง “สั้น กระแทก อ่านแล้วอยากหยุด”
+- โทนมนุษย์ ไม่ใช่ AI
+- ใช้ภาษาธรรมดา
+
+รูปแบบ:
+
+1. Hook: ...
+2. เนื้อหา: ...
+3. จุดขาย: ...
+4. CTA: ...
+
+---
+✨ ตัวอย่างคอนเท้น (3 แบบ)
+
+แบบที่ 1:
+...
+
+แบบที่ 2:
+...
+
+แบบที่ 3:
+...
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "user", content: prompt }
-      ],
+      model: "gpt-4.1-mini",
+      messages: [{ role: "user", content: prompt }],
     });
-
-    const content = response.choices?.[0]?.message?.content;
 
     return Response.json({
-      result: content || "AI ไม่ส่งข้อมูลกลับมา",
-      raw: response // debug เผื่อใช้
+      result: response.choices[0].message.content,
     });
-
   } catch (error) {
-    console.error("ERROR:", error);
-
+    console.error(error);
     return Response.json(
-      {
-        error: "AI error",
-        detail: String(error)
-      },
+      { error: "AI error" },
       { status: 500 }
     );
   }
