@@ -2,56 +2,51 @@ import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const content = body.content || "";
-    const platform = body.platform || "Facebook";
-
-    if (!content) {
-      return Response.json({ error: "No content provided" }, { status: 400 });
-    }
+    const { text, platform } = await req.json();
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
     const prompt = `
-คุณคือ AI วิเคราะห์คอนเทนต์โซเชียลแบบมืออาชีพ
+คุณคือผู้เชี่ยวชาญด้านคอนเทนต์โซเชียล
 
-แพลตฟอร์ม: ${platform}
+วิเคราะห์โพสต์นี้สำหรับ ${platform}
 
 โพสต์:
-"${content}"
+${text}
 
-ให้วิเคราะห์แบบนี้:
+ให้วิเคราะห์:
+1. Hook ดีไหม
+2. เนื้อหาเข้าใจง่ายไหม
+3. จุดขายคืออะไร
+4. CTA ดีไหม
 
-1. Hook (0-10) + เหตุผลสั้นๆ  
-2. จุดอ่อน (สั้น กระแทก)  
-3. โอกาสไวรัล (ต่ำ/กลาง/สูง + เพราะอะไร)  
-4. คำแนะนำที่ “ทำแล้วดีขึ้นจริง”  
-5. เขียนโพสต์ใหม่เวอร์ชันที่ดีกว่า (พร้อมใช้ทันที)
-
-ห้ามเขียนยาวน้ำ  
-เน้นใช้งานจริง
+ตอบแบบสั้น กระชับ อ่านง่าย
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "user", content: prompt }
       ],
     });
 
-    const result = response.choices?.[0]?.message?.content || "No response";
+    const content = response.choices?.[0]?.message?.content;
 
-    return Response.json({ result });
+    return Response.json({
+      result: content || "AI ไม่ส่งข้อมูลกลับมา",
+      raw: response // debug เผื่อใช้
+    });
 
   } catch (error) {
-    console.error(error);
+    console.error("ERROR:", error);
+
     return Response.json(
-      { error: "AI error" },
+      {
+        error: "AI error",
+        detail: String(error)
+      },
       { status: 500 }
     );
   }
