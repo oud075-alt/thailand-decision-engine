@@ -1,8 +1,42 @@
 import OpenAI from "openai";
 
+// เก็บจำนวนการใช้งานต่อ IP (แบบง่าย)
+const usageMap = new Map();
+
 export async function POST(req: Request) {
   try {
     const { text, platform } = await req.json();
+
+    // 🔒 จำกัดความยาวข้อความ
+    if (!text || text.length > 1000) {
+      return Response.json(
+        { error: "ข้อความยาวเกินไป" },
+        { status: 400 }
+      );
+    }
+
+    // 🔒 จำกัด 3 ครั้ง / วัน ต่อ IP
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const today = new Date().toDateString();
+
+    const userData = usageMap.get(ip);
+
+    if (userData && userData.date === today) {
+      if (userData.count >= 3) {
+        return Response.json(
+          { error: "คุณใช้ครบ 3 ครั้งแล้ว ลองใหม่พรุ่งนี้" },
+          { status: 429 }
+        );
+      }
+
+      userData.count += 1;
+      usageMap.set(ip, userData);
+    } else {
+      usageMap.set(ip, { count: 1, date: today });
+    }
+
+    // 🔒 delay กันยิงรัว
+    await new Promise((r) => setTimeout(r, 800));
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -26,9 +60,10 @@ export async function POST(req: Request) {
 
 5. ✨ ตัวอย่างการปรับปรุง (3 แบบ)
 - เขียนโพสต์ใหม่ 3 แบบ
-- แต่ละแบบต้อง “สั้น กระแทก อ่านแล้วอยากหยุด”
-- โทนมนุษย์ ไม่ใช่ AI
-- ใช้ภาษาธรรมดา
+- สั้น กระแทก หยุดนิ้ว
+- ภาษามนุษย์ ไม่ใช่ AI
+
+ห้ามตอบเรื่องผิดกฎหมาย / ไม่เกี่ยวกับคอนเท้น
 
 รูปแบบ:
 
