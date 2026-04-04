@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [text, setText] = useState("");
-  const [platform, setPlatform] = useState("Facebook");
+  const [platform, setPlatform] = useState("facebook");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +23,10 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text, platform }),
+        body: JSON.stringify({
+          content: text,
+          platform,
+        }),
       });
 
       const data = await res.json();
@@ -33,7 +36,7 @@ export default function Home() {
         return;
       }
 
-      setResult(data.result || "ไม่มีผลลัพธ์");
+      setResult(JSON.stringify(data.result, null, 2));
     } catch (error) {
       setResult("เชื่อมต่อ AI ไม่สำเร็จ");
     } finally {
@@ -46,9 +49,9 @@ export default function Home() {
       <h2>จะโพสต์ที่ไหน</h2>
 
       <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
-        <option>Facebook</option>
-        <option>TikTok</option>
-        <option>Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="tiktok">TikTok</option>
+        <option value="instagram">Instagram</option>
       </select>
 
       <textarea
