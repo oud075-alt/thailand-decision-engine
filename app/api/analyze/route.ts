@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -35,8 +35,52 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   instagram: "Instagram",
 };
 
-export async function POST(req: Request) {
+const DAILY_LIMIT = 3;
+const COOKIE_NAME = "content_ai_daily_limit";
+
+function getThailandDateString() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function parseUsageCookie(value: string | undefined) {
+  if (!value) {
+    return { date: getThailandDateString(), count: 0 };
+  }
+
+  const [date, countRaw] = value.split("|");
+  const count = Number(countRaw);
+
+  if (!date || Number.isNaN(count)) {
+    return { date: getThailandDateString(), count: 0 };
+  }
+
+  return { date, count };
+}
+
+export async function POST(req: NextRequest) {
   try {
+    const today = getThailandDateString();
+    const cookieValue = req.cookies.get(COOKIE_NAME)?.value;
+    const usage = parseUsageCookie(cookieValue);
+
+    const currentCount = usage.date === today ? usage.count : 0;
+
+    if (currentCount >= DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: `วันนี้คุณใช้งานครบ ${DAILY_LIMIT} ครั้งแล้ว กรุณาลองใหม่พรุ่งนี้`,
+          limit_reached: true,
+          remaining: 0,
+        },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
 
     const content = ((formData.get("content") as string) || "").trim();
@@ -92,6 +136,7 @@ export async function POST(req: Request) {
 - พูดตรง สั้น ชัด
 - ถ้าอ่านข้อความในภาพได้ไม่ครบ ให้ใช้เท่าที่เห็น
 - ถ้ามีข้อความที่ผู้ใช้พิมพ์มา ให้ความสำคัญกับข้อความนั้นก่อน
+- โทนต้องเห็นอกเห็นใจ บอกทางแก้ และนำไปใช้ได้จริง
 
 JSON schema ที่ต้องตอบ:
 {
@@ -172,10 +217,28 @@ JSON schema ที่ต้องตอบ:
       );
     }
 
-    return NextResponse.json({
+    const nextCount = currentCount + 1;
+    const remaining = Math.max(0, DAILY_LIMIT - nextCount);
+
+    const response = NextResponse.json({
       success: true,
       result: parsed,
+      usage: {
+        used: nextCount,
+        limit: DAILY_LIMIT,
+        remaining,
+      },
     });
+
+    response.cookies.set(COOKIE_NAME, `${today}|${nextCount}`, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     console.error("Analyze error:", error);
 
