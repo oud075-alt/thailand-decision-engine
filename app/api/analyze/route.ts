@@ -11,11 +11,10 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    const content = (formData.get("content") as string) || "";
-    const platform = (formData.get("platform") as Platform) || "facebook";
+    const content = ((formData.get("content") as string) || "").trim();
+    const platform = ((formData.get("platform") as string) || "facebook") as Platform;
     const image = formData.get("image") as File | null;
 
-    // เช็ค input
     if (!content && !image) {
       return NextResponse.json(
         { error: "กรุณาใส่ข้อความหรืออัปโหลดรูป" },
@@ -23,30 +22,97 @@ export async function POST(req: Request) {
       );
     }
 
-    // แค่ทดสอบว่ารับรูปได้จริงไหม
-    if (image) {
-      console.log("ได้รับรูป:", image.name, image.type, image.size);
+    // เตรียม input
+    const userContent: any[] = [];
+
+    userContent.push({
+      type: "input_text",
+      text: `
+คุณคือเครื่องซ่อมคอนเทนต์
+
+ถ้ามีภาพ → วิเคราะห์จากภาพเป็นหลัก
+ถ้ามีข้อความ → ใช้ร่วมกัน
+ถ้าเป็นภาพโพสต์ → อ่านข้อความในภาพแล้ววิเคราะห์เหมือนโพสต์จริง
+
+ตอบเป็น JSON เท่านั้นตามโครงนี้:
+
+{
+  "headline": "string",
+  "problems": ["string"],
+  "fix": {
+    "hooks": ["string"],
+    "rewrite": "string",
+    "quick_fixes": ["string"]
+  },
+  "ai_view": {
+    "facebook": "string",
+    "tiktok": "string",
+    "instagram": "string"
+  },
+  "prediction": {
+    "reach": "ต่ำ",
+    "hook_rate": 0,
+    "main_issue": "string"
+  },
+  "strengths": ["string"],
+  "platform_tip": "string"
+}
+      `,
+    });
+
+    if (content) {
+      userContent.push({
+        type: "input_text",
+        text: content,
+      });
     }
 
-    // ตอนนี้ยังใช้ content วิเคราะห์เหมือนเดิมก่อน
-    const completion = await openai.chat.completions.create({
+    if (image) {
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const base64 = buffer.toString("base64");
+
+      userContent.push({
+        type: "input_image",
+        image_url: `data:${image.type};base64,${base64}`,
+      });
+    }
+
+    const response = await openai.responses.create({
       model: "gpt-4.1-mini",
-      messages: [
-        {
-          role: "system",
-          content: "คุณคือช่างซ่อมคอนเทนต์",
-        },
+      input: [
         {
           role: "user",
-          content: content || "มีรูปแต่ไม่มีข้อความ",
+          content: userContent,
         },
       ],
     });
 
+    // 🔥 แก้จุดพังตรงนี้
+    const raw = response.output[0]?.content[0]?.text;
+
+    if (!raw) {
+      return NextResponse.json(
+        { error: "AI ไม่ตอบ", debug: response },
+        { status: 500 }
+      );
+    }
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return NextResponse.json(
+        { error: "AI ไม่ได้ตอบเป็น JSON", raw },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      note: image ? "มีการอัปโหลดรูปแล้ว" : "ไม่มีรูป",
-      message: completion.choices[0].message.content,
+      result: parsed,
+      debug_raw: raw,
     });
   } catch (error) {
     console.error(error);
