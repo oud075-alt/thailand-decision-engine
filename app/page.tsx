@@ -39,9 +39,25 @@ export default function Home() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+
+    if (!file) {
+      setImagePreview("");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+  };
+
   const handleAnalyze = async () => {
-    if (!text.trim()) {
-      setError("กรุณาใส่ข้อความก่อน");
+    if (!text.trim() && !imageFile) {
+      setError("กรุณาใส่ข้อความหรืออัปโหลดรูปก่อน");
       setResult(null);
       return;
     }
@@ -129,6 +145,39 @@ export default function Home() {
           onChange={(e) => setText(e.target.value)}
           placeholder="วางข้อความโพสต์ที่นี่..."
         />
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
+          อัปโหลดภาพโพสต์
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          style={{ marginBottom: 12 }}
+        />
+
+        {imagePreview && (
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 10,
+              padding: 10,
+              background: "#fafafa",
+            }}
+          >
+            <img
+              src={imagePreview}
+              alt="preview"
+              style={{
+                maxWidth: "100%",
+                borderRadius: 8,
+                display: "block",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <button
