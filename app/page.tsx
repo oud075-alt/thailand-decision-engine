@@ -14,18 +14,24 @@ export default function Home() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  const handleImageChange = (e: any) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+
     setImageFile(file);
 
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) {
+      setImagePreview("");
+      return;
     }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
   };
 
   const handleAnalyze = async () => {
-    if (!text && !imageFile) {
+    if (!text.trim() && !imageFile) {
       setError("กรุณาใส่ข้อความหรือรูป");
+      setResult(null);
       return;
     }
 
@@ -35,7 +41,7 @@ export default function Home() {
 
     try {
       const formData = new FormData();
-      formData.append("content", text);
+      formData.append("content", text.trim());
       formData.append("platform", platform);
 
       if (imageFile) {
@@ -50,12 +56,11 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "error");
+        setError(data.error || "เกิดข้อผิดพลาด");
         console.log(data);
         return;
       }
 
-      // 🔥 กันพังตรงนี้
       if (data.result) {
         setResult(data.result);
       } else {
@@ -63,6 +68,7 @@ export default function Home() {
         console.log("RAW:", data.debug_raw);
       }
     } catch (err) {
+      console.error(err);
       setError("เชื่อมต่อไม่ได้");
     } finally {
       setLoading(false);
@@ -73,10 +79,7 @@ export default function Home() {
     <main style={{ padding: 20, maxWidth: 800, margin: "0 auto" }}>
       <h2>เครื่องซ่อมคอนเทนต์</h2>
 
-      <select
-        value={platform}
-        onChange={(e) => setPlatform(e.target.value)}
-      >
+      <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
         <option value="facebook">Facebook</option>
         <option value="tiktok">TikTok</option>
         <option value="instagram">Instagram</option>
@@ -89,15 +92,12 @@ export default function Home() {
         placeholder="วางข้อความ..."
       />
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-      />
+      <input type="file" accept="image/*" onChange={handleImageChange} />
 
       {imagePreview && (
         <img
           src={imagePreview}
+          alt="preview"
           style={{ width: "100%", marginTop: 10 }}
         />
       )}
@@ -106,10 +106,10 @@ export default function Home() {
         {loading ? "กำลังวิเคราะห์..." : "วิเคราะห์"}
       </button>
 
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {error && <div style={{ color: "red", marginTop: 10 }}>{error}</div>}
 
       {result && (
-        <pre style={{ whiteSpace: "pre-wrap" }}>
+        <pre style={{ whiteSpace: "pre-wrap", marginTop: 10 }}>
           {JSON.stringify(result, null, 2)}
         </pre>
       )}
