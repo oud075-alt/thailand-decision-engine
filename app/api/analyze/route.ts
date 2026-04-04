@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     });
 
     // 🔥 แก้จุดพังตรงนี้
-    const raw = response.output[0]?.content[0]?.text;
+    const raw = response.output_text;
 
     if (!raw) {
       return NextResponse.json(
