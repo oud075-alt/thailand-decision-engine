@@ -67,15 +67,18 @@ export default function Home() {
     setResult(null);
 
     try {
+      const formData = new FormData();
+
+      formData.append("content", text);
+      formData.append("platform", platform);
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
       const res = await fetch("/api/analyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: text,
-          platform,
-        }),
+        body: formData,
       });
 
       const data = await res.json();
