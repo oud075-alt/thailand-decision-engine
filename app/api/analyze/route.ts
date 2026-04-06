@@ -1,250 +1,200 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import OpenAI from "openai"
+import { NextResponse } from "next/server"
 
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+})
 
-type Platform = "facebook" | "tiktok" | "instagram";
-
-type AnalysisResult = {
-  headline: string;
-  problems: string[];
-  fix: {
-    hooks: string[];
-    rewrite: string;
-    quick_fixes: string[];
-  };
-  ai_view: {
-    facebook: string;
-    tiktok: string;
-    instagram: string;
-  };
-  prediction: {
-    reach: "ต่ำ" | "กลาง" | "สูง";
-    hook_rate: number;
-    main_issue: string;
-  };
-  strengths: string[];
-  platform_tip: string;
-};
-
-const PLATFORM_LABELS: Record<Platform, string> = {
-  facebook: "Facebook",
-  tiktok: "TikTok",
-  instagram: "Instagram",
-};
-
-const DAILY_LIMIT = 3;
-const COOKIE_NAME = "content_ai_daily_limit";
-
-function getThailandDateString() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+function getLanguageConfig(language: string) {
+  switch (language) {
+    case "Thai":
+      return {
+        languageRule: "Respond only in Thai.",
+        title: "ตัวเลือกที่เหมาะกับคุณที่สุด",
+        whyFits: "ทำไมตัวเลือกนี้ถึงเหมาะกับคุณ",
+        avoid: "สิ่งที่ควรเลี่ยง",
+        alternative: "ทางเลือกสำรอง",
+        localTip: "ทิปแบบคนพื้นที่",
+        risk: "ระดับความเสี่ยง",
+      }
+    case "Chinese":
+      return {
+        languageRule: "Respond only in Simplified Chinese.",
+        title: "最适合你的选择",
+        whyFits: "为什么这个选择适合你",
+        avoid: "需要避免的事",
+        alternative: "备选方案",
+        localTip: "当地小提示",
+        risk: "风险等级",
+      }
+    case "Hindi":
+      return {
+        languageRule: "Respond only in Hindi.",
+        title: "आपके लिए सबसे सही विकल्प",
+        whyFits: "यह विकल्प आपके लिए क्यों सही है",
+        avoid: "किन बातों से बचना चाहिए",
+        alternative: "दूसरा विकल्प",
+        localTip: "स्थानीय सुझाव",
+        risk: "जोखिम स्तर",
+      }
+    case "Japanese":
+      return {
+        languageRule: "Respond only in Japanese.",
+        title: "あなたに最も合う選択",
+        whyFits: "この選択が合う理由",
+        avoid: "避けたほうがいいこと",
+        alternative: "代わりの選択肢",
+        localTip: "ローカルのヒント",
+        risk: "リスクレベル",
+      }
+    case "English":
+    default:
+      return {
+        languageRule: "Respond only in English.",
+        title: "Best Choice",
+        whyFits: "Why This Fits You",
+        avoid: "What To Avoid",
+        alternative: "Alternative Option",
+        localTip: "Local Tip",
+        risk: "Risk Level",
+      }
+  }
 }
 
-function parseUsageCookie(value: string | undefined) {
-  if (!value) {
-    return { date: getThailandDateString(), count: 0 };
-  }
-
-  const [date, countRaw] = value.split("|");
-  const count = Number(countRaw);
-
-  if (!date || Number.isNaN(count)) {
-    return { date: getThailandDateString(), count: 0 };
-  }
-
-  return { date, count };
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const today = getThailandDateString();
-    const cookieValue = req.cookies.get(COOKIE_NAME)?.value;
-    const usage = parseUsageCookie(cookieValue);
+    const {
+      language = "English",
+      province = "Krabi",
+      days = "1-3",
+      travelType = "solo",
+      budget = "budget",
+      style = "relax",
+      concern = "wrong location",
+    } = await request.json()
 
-    const currentCount = usage.date === today ? usage.count : 0;
+    const labels = getLanguageConfig(language)
 
-    if (currentCount >= DAILY_LIMIT) {
-      return NextResponse.json(
-        {
-          error: `วันนี้คุณใช้งานครบ ${DAILY_LIMIT} ครั้งแล้ว กรุณาลองใหม่พรุ่งนี้`,
-          limit_reached: true,
-          remaining: 0,
-        },
-        { status: 429 }
-      );
-    }
+    const systemPrompt = `
+You are a Thailand local travel decision expert.
 
-    const formData = await req.formData();
+Your job is NOT to write like a blog.
+Your job is to help the user make a clear travel decision for one selected province in Thailand.
 
-    const content = ((formData.get("content") as string) || "").trim();
-    const platformValue = ((formData.get("platform") as string) || "facebook").toLowerCase();
-    const image = formData.get("image") as File | null;
+Important rules:
+- Focus on the selected province: ${province}
+- The main recommendation must stay inside ${province}
+- You may mention another province only as a backup choice if truly necessary
+- Give practical advice that helps the user picture the trip clearly
+- Write in a natural, human, easy-to-understand way
+- Do not write too short
+- Do not write too long
+- Aim for around 70% detail: clear, visual, and easy to understand
+- Avoid generic filler
+- Avoid long bullet lists
+- Use short paragraphs
+- Sound like a smart local helper, not a brochure
+- Focus on decision clarity, not storytelling
+- Avoid repeating the same idea
+- Each section must add new value
 
-    const platform: Platform =
-      platformValue === "facebook" || platformValue === "tiktok" || platformValue === "instagram"
-        ? platformValue
-        : "facebook";
+STRICT FORMAT RULE:
+You MUST use the exact headings below.
+Do NOT rename them.
+Do NOT translate them differently.
+Do NOT change wording.
 
-    if (!content && !image) {
-      return NextResponse.json(
-        { error: "กรุณาใส่ข้อความหรืออัปโหลดรูป" },
-        { status: 400 }
-      );
-    }
+Use EXACTLY these headings:
 
-    let imageDataUrl = "";
+${labels.title}:
+${labels.whyFits}:
+${labels.avoid}:
+${labels.alternative}:
+${labels.localTip}:
+${labels.risk}:
 
-    if (image) {
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const mimeType = image.type || "image/png";
-      imageDataUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
-    }
+Writing instructions for each section:
 
-    const userContent: Array<
-      | { type: "text"; text: string }
-      | {
-          type: "image_url";
-          image_url: {
-            url: string;
-          };
-        }
-    > = [
-      {
-        type: "text",
-        text: `
-คุณคือ "เครื่องซ่อมคอนเทนต์"
+${labels.title}:
+Write 2-3 short paragraphs.
+Recommend the best area, zone, or trip direction inside ${province}.
+Make it specific enough that the user can imagine where to stay, what kind of atmosphere to expect, and how the trip should flow.
 
-หน้าที่:
-- ถ้ามีข้อความ ให้ใช้ข้อความนั้นเป็นหลัก
-- ถ้ามีภาพ ให้ดูภาพร่วมด้วย
-- ถ้ามีแต่ภาพ ให้ดึงสารจากภาพแล้ววิเคราะห์เหมือนเป็นโพสต์จริง
-- ต้องตอบเป็น JSON เท่านั้น
-- ห้ามมีข้อความอื่นนอก JSON
+${labels.whyFits}:
+Write 1-2 short paragraphs.
+Explain clearly why this recommendation matches the user's days, travel type, budget, style, and concern.
 
-แพลตฟอร์มเป้าหมาย: ${PLATFORM_LABELS[platform]}
+${labels.avoid}:
+Write 1 short paragraph.
+Explain the most likely mistake for this case in ${province}, in plain language.
 
-กติกา:
-- ตอบภาษาไทย
-- พูดตรง สั้น ชัด
-- ถ้าอ่านข้อความในภาพได้ไม่ครบ ให้ใช้เท่าที่เห็น
-- ถ้ามีข้อความที่ผู้ใช้พิมพ์มา ให้ความสำคัญกับข้อความนั้นก่อน
-- โทนต้องเห็นอกเห็นใจ บอกทางแก้ และนำไปใช้ได้จริง
+${labels.alternative}:
+Write 1-2 short paragraphs.
+Give one backup option.
+Prefer another area in the same province.
+Only move to another province if there is a strong reason.
 
-JSON schema ที่ต้องตอบ:
-{
-  "headline": "string",
-  "problems": ["string", "string", "string"],
-  "fix": {
-    "hooks": ["string", "string", "string"],
-    "rewrite": "string",
-    "quick_fixes": ["string", "string", "string"]
-  },
-  "ai_view": {
-    "facebook": "string",
-    "tiktok": "string",
-    "instagram": "string"
-  },
-  "prediction": {
-    "reach": "ต่ำ",
-    "hook_rate": 0,
-    "main_issue": "string"
-  },
-  "strengths": ["string", "string"],
-  "platform_tip": "string"
-}
-        `.trim(),
-      },
-    ];
+${labels.localTip}:
+Write 1 short paragraph.
+Give one realistic local-style tip that feels useful and helps avoid friction or wasted time.
 
-    if (content) {
-      userContent.push({
-        type: "text",
-        text: `ข้อความที่ต้องวิเคราะห์:\n${content}`,
-      });
-    }
+${labels.risk}:
+Write 1 short paragraph.
+Start with Low, Medium, or High if responding in English.
+If responding in Thai, start with ต่ำ, ปานกลาง, or สูง.
+If responding in Chinese, start with 低, 中, or 高.
+If responding in Hindi, start with कम, मध्यम, or उच्च.
+If responding in Japanese, start with 低, 中, or 高.
+Then explain briefly why.
 
-    if (imageDataUrl) {
-      userContent.push({
-        type: "image_url",
-        image_url: {
-          url: imageDataUrl,
-        },
-      });
-    }
+Do not add any introduction before the first heading.
+Do not add any conclusion after the last heading.
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
+${labels.languageRule}
+    `.trim()
+
+    const userPrompt = `
+Province: ${province}
+Days: ${days}
+Travel type: ${travelType}
+Budget: ${budget}
+Style: ${style}
+Main concern: ${concern}
+    `.trim()
+
+    const response = await client.responses.create({
+      model: "gpt-5.4",
+      input: [
         {
           role: "system",
-          content:
-            "คุณคือเครื่องซ่อมคอนเทนต์ ต้องตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอก JSON",
+          content: [
+            {
+              type: "input_text",
+              text: systemPrompt,
+            },
+          ],
         },
         {
           role: "user",
-          content: userContent,
+          content: [
+            {
+              type: "input_text",
+              text: userPrompt,
+            },
+          ],
         },
       ],
-    });
+    })
 
-    const raw = completion.choices[0]?.message?.content;
-
-    if (!raw) {
-      return NextResponse.json(
-        { error: "ไม่สามารถวิเคราะห์คอนเทนต์ได้ในตอนนี้" },
-        { status: 500 }
-      );
-    }
-
-    let parsed: AnalysisResult;
-
-    try {
-      parsed = JSON.parse(raw) as AnalysisResult;
-    } catch {
-      return NextResponse.json(
-        { error: "AI ไม่ได้ตอบเป็น JSON", raw },
-        { status: 500 }
-      );
-    }
-
-    const nextCount = currentCount + 1;
-    const remaining = Math.max(0, DAILY_LIMIT - nextCount);
-
-    const response = NextResponse.json({
-      success: true,
-      result: parsed,
-      usage: {
-        used: nextCount,
-        limit: DAILY_LIMIT,
-        remaining,
-      },
-    });
-
-    response.cookies.set(COOKIE_NAME, `${today}|${nextCount}`, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return response;
+    return NextResponse.json({
+      result: response.output_text || "No result",
+    })
   } catch (error) {
-    console.error("Analyze error:", error);
+    console.error("API error:", error)
 
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดระหว่างวิเคราะห์คอนเทนต์" },
+      { result: "Server error" },
       { status: 500 }
-    );
+    )
   }
 }

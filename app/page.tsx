@@ -1,635 +1,657 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
-type AnalysisResult = {
-  headline: string;
-  problems: string[];
-  fix: {
-    hooks: string[];
-    rewrite: string;
-    quick_fixes: string[];
-  };
-  ai_view: {
-    facebook: string;
-    tiktok: string;
-    instagram: string;
-  };
-  prediction: {
-    reach: "ต่ำ" | "กลาง" | "สูง";
-    hook_rate: number;
-    main_issue: string;
-  };
-  strengths: string[];
-  platform_tip: string;
-};
+const provinces = [
+  "Bangkok",
+  "Amnat Charoen",
+  "Ang Thong",
+  "Bueng Kan",
+  "Buriram",
+  "Chachoengsao",
+  "Chai Nat",
+  "Chaiyaphum",
+  "Chanthaburi",
+  "Chiang Mai",
+  "Chiang Rai",
+  "Chonburi",
+  "Chumphon",
+  "Kalasin",
+  "Kamphaeng Phet",
+  "Kanchanaburi",
+  "Khon Kaen",
+  "Krabi",
+  "Lampang",
+  "Lamphun",
+  "Loei",
+  "Lopburi",
+  "Mae Hong Son",
+  "Maha Sarakham",
+  "Mukdahan",
+  "Nakhon Nayok",
+  "Nakhon Pathom",
+  "Nakhon Phanom",
+  "Nakhon Ratchasima",
+  "Nakhon Sawan",
+  "Nakhon Si Thammarat",
+  "Nan",
+  "Narathiwat",
+  "Nong Bua Lamphu",
+  "Nong Khai",
+  "Nonthaburi",
+  "Pathum Thani",
+  "Pattani",
+  "Phang Nga",
+  "Phatthalung",
+  "Phayao",
+  "Phetchabun",
+  "Phetchaburi",
+  "Phichit",
+  "Phitsanulok",
+  "Phra Nakhon Si Ayutthaya",
+  "Phrae",
+  "Phuket",
+  "Prachinburi",
+  "Prachuap Khiri Khan",
+  "Ranong",
+  "Ratchaburi",
+  "Rayong",
+  "Roi Et",
+  "Sa Kaeo",
+  "Sakon Nakhon",
+  "Samut Prakan",
+  "Samut Sakhon",
+  "Samut Songkhram",
+  "Saraburi",
+  "Satun",
+  "Sing Buri",
+  "Sisaket",
+  "Songkhla",
+  "Sukhothai",
+  "Suphan Buri",
+  "Surat Thani",
+  "Surin",
+  "Tak",
+  "Trang",
+  "Trat",
+  "Ubon Ratchathani",
+  "Udon Thani",
+  "Uthai Thani",
+  "Uttaradit",
+  "Yala",
+  "Yasothon",
+]
 
-type Platform = "facebook" | "tiktok" | "instagram";
+const provinceThai: Record<string, string> = {
+  Bangkok: "กรุงเทพมหานคร",
+  "Amnat Charoen": "อำนาจเจริญ",
+  "Ang Thong": "อ่างทอง",
+  "Bueng Kan": "บึงกาฬ",
+  Buriram: "บุรีรัมย์",
+  Chachoengsao: "ฉะเชิงเทรา",
+  "Chai Nat": "ชัยนาท",
+  Chaiyaphum: "ชัยภูมิ",
+  Chanthaburi: "จันทบุรี",
+  "Chiang Mai": "เชียงใหม่",
+  "Chiang Rai": "เชียงราย",
+  Chonburi: "ชลบุรี",
+  Chumphon: "ชุมพร",
+  Kalasin: "กาฬสินธุ์",
+  "Kamphaeng Phet": "กำแพงเพชร",
+  Kanchanaburi: "กาญจนบุรี",
+  "Khon Kaen": "ขอนแก่น",
+  Krabi: "กระบี่",
+  Lampang: "ลำปาง",
+  Lamphun: "ลำพูน",
+  Loei: "เลย",
+  Lopburi: "ลพบุรี",
+  "Mae Hong Son": "แม่ฮ่องสอน",
+  "Maha Sarakham": "มหาสารคาม",
+  Mukdahan: "มุกดาหาร",
+  "Nakhon Nayok": "นครนายก",
+  "Nakhon Pathom": "นครปฐม",
+  "Nakhon Phanom": "นครพนม",
+  "Nakhon Ratchasima": "นครราชสีมา",
+  "Nakhon Sawan": "นครสวรรค์",
+  "Nakhon Si Thammarat": "นครศรีธรรมราช",
+  Nan: "น่าน",
+  Narathiwat: "นราธิวาส",
+  "Nong Bua Lamphu": "หนองบัวลำภู",
+  "Nong Khai": "หนองคาย",
+  Nonthaburi: "นนทบุรี",
+  "Pathum Thani": "ปทุมธานี",
+  Pattani: "ปัตตานี",
+  "Phang Nga": "พังงา",
+  Phatthalung: "พัทลุง",
+  Phayao: "พะเยา",
+  Phetchabun: "เพชรบูรณ์",
+  Phetchaburi: "เพชรบุรี",
+  Phichit: "พิจิตร",
+  Phitsanulok: "พิษณุโลก",
+  "Phra Nakhon Si Ayutthaya": "พระนครศรีอยุธยา",
+  Phrae: "แพร่",
+  Phuket: "ภูเก็ต",
+  Prachinburi: "ปราจีนบุรี",
+  "Prachuap Khiri Khan": "ประจวบคีรีขันธ์",
+  Ranong: "ระนอง",
+  Ratchaburi: "ราชบุรี",
+  Rayong: "ระยอง",
+  "Roi Et": "ร้อยเอ็ด",
+  "Sa Kaeo": "สระแก้ว",
+  "Sakon Nakhon": "สกลนคร",
+  "Samut Prakan": "สมุทรปราการ",
+  "Samut Sakhon": "สมุทรสาคร",
+  "Samut Songkhram": "สมุทรสงคราม",
+  Saraburi: "สระบุรี",
+  Satun: "สตูล",
+  "Sing Buri": "สิงห์บุรี",
+  Sisaket: "ศรีสะเกษ",
+  Songkhla: "สงขลา",
+  Sukhothai: "สุโขทัย",
+  "Suphan Buri": "สุพรรณบุรี",
+  "Surat Thani": "สุราษฎร์ธานี",
+  Surin: "สุรินทร์",
+  Tak: "ตาก",
+  Trang: "ตรัง",
+  Trat: "ตราด",
+  "Ubon Ratchathani": "อุบลราชธานี",
+  "Udon Thani": "อุดรธานี",
+  "Uthai Thani": "อุทัยธานี",
+  Uttaradit: "อุตรดิตถ์",
+  Yala: "ยะลา",
+  Yasothon: "ยโสธร",
+}
 
-const platformLabels: Record<Platform, string> = {
-  facebook: "Facebook",
-  tiktok: "TikTok",
-  instagram: "Instagram",
-};
+const ui: Record<string, any> = {
+  English: {
+    title: "Thailand Decision Engine",
+    subtitle:
+      "Choose your destination, travel style, and trip type to get a clearer travel decision.",
+    modeDecision: "Decision Mode",
+    modeAsk: "Ask Mode",
+    askPlaceholder:
+      "Example: Phi Phi or Hong? / Is taxi expensive? / Early flight, what time should I leave?",
+    askButton: "Ask",
+    language: "Language",
+    province: "Province",
+    days: "Days",
+    travelType: "Travel type",
+    budget: "Budget",
+    style: "Style",
+    concern: "Main concern",
+    button: "Get Decision",
+    thinking: "Thinking...",
+    error: "Something went wrong",
+    noResult: "No result",
+    days1: "1-3 days",
+    days2: "4-7 days",
+    days3: "7+ days",
+    solo: "solo",
+    couple: "couple",
+    family: "family",
+    friends: "friends",
+    budget1: "budget",
+    budget2: "mid",
+    budget3: "luxury",
+    style1: "relax",
+    style2: "explore",
+    style3: "party",
+    style4: "mixed",
+    concern1: "wrong location",
+    concern2: "wasted time",
+    concern3: "overpaying",
+    concern4: "don't know where to start",
+    provinceLabel: (name: string) => name,
+  },
+  Thai: {
+    title: "เครื่องช่วยตัดสินใจเที่ยวไทย",
+    subtitle:
+      "เลือกจังหวัด รูปแบบการเที่ยว และสไตล์การเดินทาง เพื่อให้ได้คำแนะนำที่ชัดขึ้นและตัดสินใจง่ายขึ้น",
+    modeDecision: "โหมดเลือกให้",
+    modeAsk: "โหมดถามตรงๆ",
+    askPlaceholder:
+      "เช่น: ไป phi phi หรือ hong ดี / taxi กระบี่แพงไหม / flight เช้าควรออกกี่โมง",
+    askButton: "ถามเลย",
+    language: "ภาษา",
+    province: "จังหวัด",
+    days: "จำนวนวัน",
+    travelType: "ลักษณะการเดินทาง",
+    budget: "งบประมาณ",
+    style: "สไตล์เที่ยว",
+    concern: "สิ่งที่กังวลที่สุด",
+    button: "ขอคำแนะนำ",
+    thinking: "กำลังคิด...",
+    error: "เกิดข้อผิดพลาด",
+    noResult: "ยังไม่มีผลลัพธ์",
+    days1: "1-3 วัน",
+    days2: "4-7 วัน",
+    days3: "7 วันขึ้นไป",
+    solo: "เที่ยวคนเดียว",
+    couple: "คู่รัก",
+    family: "ครอบครัว",
+    friends: "เพื่อน",
+    budget1: "ประหยัด",
+    budget2: "ปานกลาง",
+    budget3: "หรู",
+    style1: "พักผ่อน",
+    style2: "เที่ยวสำรวจ",
+    style3: "สายปาร์ตี้",
+    style4: "ผสมหลายแบบ",
+    concern1: "กลัวเลือกพื้นที่ผิด",
+    concern2: "กลัวเสียเวลา",
+    concern3: "กลัวจ่ายแพงเกินไป",
+    concern4: "ไม่รู้จะเริ่มจากตรงไหน",
+    provinceLabel: (name: string) => provinceThai[name] || name,
+  },
+  Chinese: {
+    title: "泰国旅行决策助手",
+    subtitle: "选择目的地、省份、旅行方式和风格，帮助你更快做出更清晰的旅行决定。",
+    modeDecision: "选择模式",
+    modeAsk: "提问模式",
+    askPlaceholder:
+      "例如：Phi Phi 还是 Hong？/ 出租车贵吗？/ 早班机几点出发？",
+    askButton: "提问",
+    language: "语言",
+    province: "省份",
+    days: "天数",
+    travelType: "出行类型",
+    budget: "预算",
+    style: "旅行风格",
+    concern: "最担心的问题",
+    button: "获取建议",
+    thinking: "正在分析...",
+    error: "发生错误",
+    noResult: "暂无结果",
+    days1: "1-3天",
+    days2: "4-7天",
+    days3: "7天以上",
+    solo: "独自旅行",
+    couple: "情侣",
+    family: "家庭",
+    friends: "朋友",
+    budget1: "经济型",
+    budget2: "中等",
+    budget3: "高端",
+    style1: "放松休闲",
+    style2: "探索体验",
+    style3: "夜生活/派对",
+    style4: "混合型",
+    concern1: "担心选错地方",
+    concern2: "担心浪费时间",
+    concern3: "担心花太多钱",
+    concern4: "不知道从哪里开始",
+    provinceLabel: (name: string) => name,
+  },
+  Hindi: {
+    title: "थाईलैंड ट्रैवल डिसीजन इंजन",
+    subtitle:
+      "अपनी मंज़िल, यात्रा शैली और ट्रिप प्रकार चुनें ताकि आपको ज़्यादा साफ़ और आसान निर्णय मिल सके।",
+    modeDecision: "डिसीजन मोड",
+    modeAsk: "आस्क मोड",
+    askPlaceholder:
+      "उदाहरण: Phi Phi या Hong? / टैक्सी महंगी है? / सुबह की फ्लाइट के लिए कितने बजे निकलें?",
+    askButton: "पूछें",
+    language: "भाषा",
+    province: "प्रांत",
+    days: "दिन",
+    travelType: "यात्रा प्रकार",
+    budget: "बजट",
+    style: "यात्रा शैली",
+    concern: "मुख्य चिंता",
+    button: "सलाह पाएं",
+    thinking: "सोचा जा रहा है...",
+    error: "कुछ गड़बड़ हो गई",
+    noResult: "कोई परिणाम नहीं",
+    days1: "1-3 दिन",
+    days2: "4-7 दिन",
+    days3: "7+ दिन",
+    solo: "अकेले",
+    couple: "कपल",
+    family: "परिवार",
+    friends: "दोस्त",
+    budget1: "कम बजट",
+    budget2: "मध्यम",
+    budget3: "लक्ज़री",
+    style1: "आराम",
+    style2: "घूमना-खोजना",
+    style3: "पार्टी",
+    style4: "मिक्स",
+    concern1: "गलत जगह चुनने का डर",
+    concern2: "समय बर्बाद होने का डर",
+    concern3: "ज़्यादा खर्च होने का डर",
+    concern4: "समझ नहीं आ रहा कहाँ से शुरू करें",
+    provinceLabel: (name: string) => name,
+  },
+  Japanese: {
+    title: "タイ旅行ディシジョンエンジン",
+    subtitle:
+      "行き先、旅のタイプ、スタイルを選ぶと、より分かりやすく旅の判断ができます。",
+    modeDecision: "選択モード",
+    modeAsk: "質問モード",
+    askPlaceholder:
+      "例: Phi Phi と Hong どっち？ / タクシー高い？ / 早朝便は何時に出ればいい？",
+    askButton: "質問する",
+    language: "言語",
+    province: "県",
+    days: "日数",
+    travelType: "旅行タイプ",
+    budget: "予算",
+    style: "旅のスタイル",
+    concern: "いちばん心配なこと",
+    button: "提案を見る",
+    thinking: "考え中...",
+    error: "エラーが発生しました",
+    noResult: "結果がありません",
+    days1: "1-3日",
+    days2: "4-7日",
+    days3: "7日以上",
+    solo: "一人旅",
+    couple: "カップル",
+    family: "家族",
+    friends: "友人",
+    budget1: "節約",
+    budget2: "中間",
+    budget3: "高級",
+    style1: "のんびり",
+    style2: "探索",
+    style3: "パーティー",
+    style4: "ミックス",
+    concern1: "場所選びを間違えたくない",
+    concern2: "時間を無駄にしたくない",
+    concern3: "高くつきすぎるのが不安",
+    concern4: "何から始めればいいか分からない",
+    provinceLabel: (name: string) => name,
+  },
+}
 
 export default function Home() {
-  const [text, setText] = useState("");
-  const [platform, setPlatform] = useState<Platform>("facebook");
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const [language, setLanguage] = useState("English")
+  const [province, setProvince] = useState("Krabi")
+  const [days, setDays] = useState("1-3")
+  const [travelType, setTravelType] = useState("solo")
+  const [budget, setBudget] = useState("budget")
+  const [style, setStyle] = useState("relax")
+  const [concern, setConcern] = useState("wrong location")
+  const [mode, setMode] = useState("decision")
+  const [question, setQuestion] = useState("")
+  const [result, setResult] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
+  const t = ui[language] || ui.English
 
-    if (!file) {
-      setImagePreview("");
-      return;
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
-  };
-
-  const handleAnalyze = async () => {
-    if (!text.trim() && !imageFile) {
-      setError("กรุณาใส่ข้อความหรืออัปโหลดรูปก่อน");
-      setResult(null);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setResult(null);
+  const handleSubmit = async () => {
+    setLoading(true)
+    setResult("")
 
     try {
-      const formData = new FormData();
-      formData.append("content", text.trim());
-      formData.append("platform", platform);
-
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
-
       const res = await fetch("/api/analyze", {
         method: "POST",
-        body: formData,
-      });
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          language,
+          province,
+          days,
+          travelType,
+          budget,
+          style,
+          concern,
+        }),
+      })
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "เกิดข้อผิดพลาด");
-        return;
-      }
-
-      if (data.result) {
-        setResult(data.result);
-      } else {
-        setError("AI ไม่ส่งผลลัพธ์");
-      }
-    } catch {
-      setError("เชื่อมต่อไม่ได้");
+      const data = await res.json()
+      setResult(data.result || t.noResult)
+    } catch (error) {
+      setResult(t.error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleAsk = async () => {
+    setLoading(true)
+    setResult("")
+
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          language,
+          province,
+          question,
+        }),
+      })
+
+      const data = await res.json()
+      setResult(data.result || t.noResult)
+    } catch (error) {
+      setResult(t.error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.bgGlowTop} />
-      <div style={styles.bgGlowBottom} />
+    <main
+      style={{
+        maxWidth: "720px",
+        margin: "40px auto",
+        padding: "24px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>{t.title}</h1>
 
-      <section style={styles.heroCard}>
-        <div style={styles.heroLeft}>
-          <div style={styles.badge}>AI Content Fixer</div>
-          <h1 style={styles.title}>เครื่องซ่อมคอนเทนต์</h1>
-          <p style={styles.subtitle}>
-            วิเคราะห์จากข้อความหรือภาพ
-            แล้วสรุปให้เห็นทันทีว่าโพสต์นี้เงียบเพราะอะไร
-            พร้อมแนวแก้ที่เอาไปใช้ต่อได้เลย
-          </p>
-        </div>
+      <p style={{ marginBottom: "24px", color: "#555", lineHeight: 1.6 }}>
+        {t.subtitle}
+      </p>
 
-        <div style={styles.heroRight}>
-          <div style={styles.miniStatCard}>
-            <div style={styles.miniStatLabel}>เหมาะกับ</div>
-            <div style={styles.miniStatValue}>Creator / พ่อค้าแม่ค้า</div>
-          </div>
-          <div style={styles.miniStatCard}>
-            <div style={styles.miniStatLabel}>วิเคราะห์ได้จาก</div>
-            <div style={styles.miniStatValue}>ข้อความ + ภาพ</div>
-          </div>
-        </div>
-      </section>
-
-      <section style={styles.inputCard}>
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>จะโพสต์ที่ไหน</label>
-          <select
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value as Platform)}
-            style={styles.select}
-          >
-            <option value="facebook">Facebook</option>
-            <option value="tiktok">TikTok</option>
-            <option value="instagram">Instagram</option>
-          </select>
-        </div>
-
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>วางข้อความโพสต์</label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="วางข้อความที่ต้องการให้ AI วิเคราะห์ตรงนี้..."
-            style={styles.textarea}
-          />
-        </div>
-
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>อัปโหลดภาพโพสต์</label>
-          <label style={styles.uploadBox}>
-            <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
-            <div style={styles.uploadIcon}>＋</div>
-            <div style={styles.uploadTitle}>
-              {imageFile ? imageFile.name : "เลือกภาพหรือแคปหน้าจอโพสต์"}
-            </div>
-            <div style={styles.uploadHint}>
-              ใช้ได้ทั้งภาพโพสต์ ภาพแคปหน้าจอ หรือภาพโฆษณา
-            </div>
-          </label>
-        </div>
-
-        {imagePreview && (
-          <div style={styles.previewWrap}>
-            <div style={styles.previewTitle}>ภาพที่อัปโหลด</div>
-            <img src={imagePreview} alt="preview" style={styles.previewImage} />
-          </div>
-        )}
-
-        <button onClick={handleAnalyze} disabled={loading} style={loading ? styles.buttonDisabled : styles.button}>
-          {loading ? "กำลังวิเคราะห์..." : `วิเคราะห์โพสต์ ${platformLabels[platform]}`}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <button
+          onClick={() => setMode("decision")}
+          style={{
+            padding: "10px 14px",
+            cursor: "pointer",
+            background: mode === "decision" ? "#111" : "#eee",
+            color: mode === "decision" ? "#fff" : "#000",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+          }}
+        >
+          {t.modeDecision}
         </button>
 
-        {error && <div style={styles.errorBox}>{error}</div>}
-      </section>
-
-      {result && (
-        <section style={styles.resultWrap}>
-          <div style={styles.resultHeader}>
-            <div>
-              <div style={styles.resultEyebrow}>ผลวิเคราะห์</div>
-              <h2 style={styles.resultTitle}>{platformLabels[platform]}</h2>
-            </div>
-            <div style={styles.resultChip}>พร้อมใช้งาน</div>
-          </div>
-
-          <Card title="สรุปก่อน" icon="✦">
-            <p style={styles.headlineText}>{result.headline}</p>
-          </Card>
-
-          <div style={styles.gridTwo}>
-            <Card title="คาดการณ์" icon="◉">
-              <div style={styles.statsGrid}>
-                <InfoBox label="Reach คาดการณ์" value={result.prediction.reach} />
-                <InfoBox label="โอกาสหยุดนิ้ว" value={`${result.prediction.hook_rate}%`} />
-                <InfoBox label="ปัญหาหลัก" value={result.prediction.main_issue} />
-              </div>
-            </Card>
-
-            <Card title="คำแนะนำสำหรับแพลตฟอร์มนี้" icon="➜">
-              <div style={styles.textBlock}>{result.platform_tip}</div>
-            </Card>
-          </div>
-
-          <div style={styles.gridTwo}>
-            <Card title="จุดที่ทำให้โพสต์เงียบ" icon="!" >
-              <ul style={styles.list}>
-                {result.problems.map((item, index) => (
-                  <li key={index} style={styles.listItem}>{item}</li>
-                ))}
-              </ul>
-            </Card>
-
-            <Card title="จุดที่ยังดีอยู่" icon="✓">
-              <ul style={styles.list}>
-                {result.strengths.map((item, index) => (
-                  <li key={index} style={styles.listItem}>{item}</li>
-                ))}
-              </ul>
-            </Card>
-          </div>
-
-          <Card title="Hook ใหม่ ใช้แทนได้เลย" icon="⚡">
-            <ul style={styles.list}>
-              {result.fix.hooks.map((item, index) => (
-                <li key={index} style={styles.listItem}>{item}</li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card title="เวอร์ชั่นแก้แล้ว" icon="✎">
-            <div style={styles.textBlockStrong}>{result.fix.rewrite}</div>
-          </Card>
-
-          <Card title="แก้เร็วได้ทันที" icon="↺">
-            <ul style={styles.list}>
-              {result.fix.quick_fixes.map((item, index) => (
-                <li key={index} style={styles.listItem}>{item}</li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card title="มุมมองของแต่ละแพลตฟอร์ม" icon="⌘">
-            <div style={styles.platformGrid}>
-              <InfoBox label="Facebook" value={result.ai_view.facebook} />
-              <InfoBox label="TikTok" value={result.ai_view.tiktok} />
-              <InfoBox label="Instagram" value={result.ai_view.instagram} />
-            </div>
-          </Card>
-        </section>
-      )}
-    </main>
-  );
-}
-
-function Card({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section style={styles.card}>
-      <div style={styles.cardHeader}>
-        <div style={styles.cardIcon}>{icon}</div>
-        <h3 style={styles.cardTitle}>{title}</h3>
+        <button
+          onClick={() => setMode("ask")}
+          style={{
+            padding: "10px 14px",
+            cursor: "pointer",
+            background: mode === "ask" ? "#111" : "#eee",
+            color: mode === "ask" ? "#fff" : "#000",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+          }}
+        >
+          {t.modeAsk}
+        </button>
       </div>
-      {children}
-    </section>
-  );
-}
 
-function InfoBox({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={styles.infoBox}>
-      <div style={styles.infoLabel}>{label}</div>
-      <div style={styles.infoValue}>{value}</div>
-    </div>
-  );
-}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        <label>
+          <div style={{ marginBottom: "6px" }}>{t.language}</div>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={{ width: "100%", padding: "10px" }}
+          >
+            <option value="English">English</option>
+            <option value="Chinese">中文</option>
+            <option value="Hindi">हिन्दी</option>
+            <option value="Japanese">日本語</option>
+            <option value="Thai">ไทย</option>
+          </select>
+        </label>
 
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    padding: "32px 20px 60px",
-    maxWidth: 1120,
-    margin: "0 auto",
-    fontFamily: "Inter, system-ui, sans-serif",
-    position: "relative",
-    color: "#111827",
-  },
-  bgGlowTop: {
-    position: "fixed",
-    top: -120,
-    left: -120,
-    width: 320,
-    height: 320,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(99,102,241,0.16) 0%, rgba(99,102,241,0) 70%)",
-    pointerEvents: "none",
-    zIndex: 0,
-  },
-  bgGlowBottom: {
-    position: "fixed",
-    bottom: -120,
-    right: -120,
-    width: 340,
-    height: 340,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(16,185,129,0.14) 0%, rgba(16,185,129,0) 70%)",
-    pointerEvents: "none",
-    zIndex: 0,
-  },
-  heroCard: {
-    position: "relative",
-    zIndex: 1,
-    display: "grid",
-    gridTemplateColumns: "1.5fr 1fr",
-    gap: 18,
-    padding: 24,
-    borderRadius: 24,
-    background: "linear-gradient(135deg, #111827 0%, #1f2937 60%, #0f172a 100%)",
-    color: "white",
-    boxShadow: "0 22px 60px rgba(15, 23, 42, 0.18)",
-    marginBottom: 20,
-  },
-  heroLeft: {},
-  heroRight: {
-    display: "grid",
-    gap: 12,
-    alignContent: "center",
-  },
-  badge: {
-    display: "inline-block",
-    padding: "7px 12px",
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.12)",
-    color: "#dbeafe",
-    fontSize: 13,
-    fontWeight: 700,
-    marginBottom: 14,
-  },
-  title: {
-    margin: 0,
-    fontSize: 42,
-    lineHeight: 1.05,
-    letterSpacing: -1,
-  },
-  subtitle: {
-    marginTop: 14,
-    marginBottom: 0,
-    fontSize: 17,
-    lineHeight: 1.75,
-    color: "rgba(255,255,255,0.82)",
-    maxWidth: 700,
-  },
-  miniStatCard: {
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.10)",
-    borderRadius: 18,
-    padding: 16,
-    backdropFilter: "blur(8px)",
-  },
-  miniStatLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.65)",
-    marginBottom: 8,
-  },
-  miniStatValue: {
-    fontSize: 18,
-    fontWeight: 800,
-    lineHeight: 1.4,
-  },
-  inputCard: {
-    position: "relative",
-    zIndex: 1,
-    background: "rgba(255,255,255,0.88)",
-    backdropFilter: "blur(12px)",
-    border: "1px solid rgba(17,24,39,0.06)",
-    borderRadius: 24,
-    padding: 22,
-    boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)",
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    display: "block",
-    marginBottom: 8,
-    fontWeight: 800,
-    fontSize: 15,
-    color: "#111827",
-  },
-  select: {
-    width: "100%",
-    maxWidth: 240,
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid #d1d5db",
-    fontSize: 16,
-    outline: "none",
-    background: "white",
-  },
-  textarea: {
-    width: "100%",
-    minHeight: 220,
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid #d1d5db",
-    fontSize: 16,
-    lineHeight: 1.6,
-    resize: "vertical",
-    outline: "none",
-    background: "white",
-    boxSizing: "border-box",
-  },
-  uploadBox: {
-    border: "1.5px dashed #cbd5e1",
-    borderRadius: 18,
-    padding: 22,
-    background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-    cursor: "pointer",
-    display: "block",
-  },
-  uploadIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 999,
-    background: "#111827",
-    color: "white",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 24,
-    marginBottom: 12,
-  },
-  uploadTitle: {
-    fontSize: 17,
-    fontWeight: 800,
-    color: "#111827",
-    marginBottom: 6,
-  },
-  uploadHint: {
-    fontSize: 14,
-    color: "#6b7280",
-    lineHeight: 1.6,
-  },
-  previewWrap: {
-    marginTop: 16,
-    border: "1px solid #e5e7eb",
-    borderRadius: 20,
-    padding: 14,
-    background: "#f8fafc",
-  },
-  previewTitle: {
-    fontSize: 14,
-    fontWeight: 800,
-    marginBottom: 10,
-    color: "#334155",
-  },
-  previewImage: {
-    width: "100%",
-    borderRadius: 14,
-    display: "block",
-  },
-  button: {
-    width: "100%",
-    marginTop: 8,
-    padding: 16,
-    borderRadius: 18,
-    border: "none",
-    background: "linear-gradient(135deg, #111827 0%, #2563eb 100%)",
-    color: "white",
-    fontSize: 18,
-    fontWeight: 800,
-    cursor: "pointer",
-    boxShadow: "0 14px 35px rgba(37, 99, 235, 0.22)",
-  },
-  buttonDisabled: {
-    width: "100%",
-    marginTop: 8,
-    padding: 16,
-    borderRadius: 18,
-    border: "none",
-    background: "#94a3b8",
-    color: "white",
-    fontSize: 18,
-    fontWeight: 800,
-    cursor: "not-allowed",
-  },
-  errorBox: {
-    marginTop: 16,
-    background: "#fff1f2",
-    border: "1px solid #fecdd3",
-    padding: 14,
-    borderRadius: 16,
-    color: "#be123c",
-    fontWeight: 700,
-  },
-  resultWrap: {
-    position: "relative",
-    zIndex: 1,
-    marginTop: 24,
-  },
-  resultHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 16,
-    flexWrap: "wrap",
-  },
-  resultEyebrow: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "#6366f1",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  resultTitle: {
-    margin: 0,
-    fontSize: 30,
-    lineHeight: 1.1,
-  },
-  resultChip: {
-    padding: "10px 14px",
-    borderRadius: 999,
-    background: "#ecfeff",
-    color: "#0f766e",
-    fontWeight: 800,
-    fontSize: 14,
-    border: "1px solid #a5f3fc",
-  },
-  gridTwo: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 16,
-    marginTop: 16,
-  },
-  card: {
-    background: "rgba(255,255,255,0.90)",
-    border: "1px solid rgba(17,24,39,0.06)",
-    borderRadius: 24,
-    padding: 20,
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.08)",
-    marginTop: 16,
-  },
-  cardHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 14,
-  },
-  cardIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    background: "#eef2ff",
-    color: "#4338ca",
-    display: "grid",
-    placeItems: "center",
-    fontWeight: 800,
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: 22,
-    lineHeight: 1.2,
-  },
-  headlineText: {
-    margin: 0,
-    fontSize: 20,
-    fontWeight: 800,
-    lineHeight: 1.7,
-  },
-  statsGrid: {
-    display: "grid",
-    gap: 10,
-  },
-  infoBox: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 18,
-    padding: 14,
-  },
-  infoLabel: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 6,
-    fontWeight: 700,
-  },
-  infoValue: {
-    fontSize: 18,
-    fontWeight: 800,
-    lineHeight: 1.6,
-    color: "#111827",
-  },
-  list: {
-    margin: 0,
-    paddingLeft: 22,
-    lineHeight: 1.9,
-  },
-  listItem: {
-    marginBottom: 6,
-    color: "#1f2937",
-  },
-  textBlock: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 18,
-    padding: 16,
-    lineHeight: 1.85,
-    color: "#1f2937",
-  },
-  textBlockStrong: {
-    background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-    border: "1px solid #dbeafe",
-    borderRadius: 18,
-    padding: 16,
-    lineHeight: 1.9,
-    color: "#111827",
-    fontWeight: 600,
-    whiteSpace: "pre-wrap",
-  },
-  platformGrid: {
-    display: "grid",
-    gap: 10,
-  },
-};
+        <label>
+          <div style={{ marginBottom: "6px" }}>{t.province}</div>
+          <select
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+            style={{ width: "100%", padding: "10px" }}
+          >
+            {provinces.map((item) => (
+              <option key={item} value={item}>
+                {t.provinceLabel(item)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {mode === "decision" && (
+          <>
+            <label>
+              <div style={{ marginBottom: "6px" }}>{t.days}</div>
+              <select
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                style={{ width: "100%", padding: "10px" }}
+              >
+                <option value="1-3">{t.days1}</option>
+                <option value="4-7">{t.days2}</option>
+                <option value="7+">{t.days3}</option>
+              </select>
+            </label>
+
+            <label>
+              <div style={{ marginBottom: "6px" }}>{t.travelType}</div>
+              <select
+                value={travelType}
+                onChange={(e) => setTravelType(e.target.value)}
+                style={{ width: "100%", padding: "10px" }}
+              >
+                <option value="solo">{t.solo}</option>
+                <option value="couple">{t.couple}</option>
+                <option value="family">{t.family}</option>
+                <option value="friends">{t.friends}</option>
+              </select>
+            </label>
+
+            <label>
+              <div style={{ marginBottom: "6px" }}>{t.budget}</div>
+              <select
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                style={{ width: "100%", padding: "10px" }}
+              >
+                <option value="budget">{t.budget1}</option>
+                <option value="mid">{t.budget2}</option>
+                <option value="luxury">{t.budget3}</option>
+              </select>
+            </label>
+
+            <label>
+              <div style={{ marginBottom: "6px" }}>{t.style}</div>
+              <select
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                style={{ width: "100%", padding: "10px" }}
+              >
+                <option value="relax">{t.style1}</option>
+                <option value="explore">{t.style2}</option>
+                <option value="party">{t.style3}</option>
+                <option value="mixed">{t.style4}</option>
+              </select>
+            </label>
+
+            <label>
+              <div style={{ marginBottom: "6px" }}>{t.concern}</div>
+              <select
+                value={concern}
+                onChange={(e) => setConcern(e.target.value)}
+                style={{ width: "100%", padding: "10px" }}
+              >
+                <option value="wrong location">{t.concern1}</option>
+                <option value="wasted time">{t.concern2}</option>
+                <option value="overpaying">{t.concern3}</option>
+                <option value="don't know where to start">{t.concern4}</option>
+              </select>
+            </label>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                padding: "12px",
+                marginTop: "8px",
+                cursor: "pointer",
+              }}
+            >
+              {loading ? t.thinking : t.button}
+            </button>
+          </>
+        )}
+
+        {mode === "ask" && (
+          <>
+            <textarea
+              placeholder={t.askPlaceholder}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              style={{
+                width: "100%",
+                height: "120px",
+                padding: "12px",
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+            />
+
+            <button
+              onClick={handleAsk}
+              disabled={loading}
+              style={{
+                padding: "12px",
+                marginTop: "8px",
+                cursor: "pointer",
+              }}
+            >
+              {loading ? t.thinking : t.askButton}
+            </button>
+          </>
+        )}
+
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "16px",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            background: "#fafafa",
+            minHeight: "160px",
+          }}
+        >
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              margin: 0,
+              fontFamily: "inherit",
+              lineHeight: 1.65,
+            }}
+          >
+            {result}
+          </pre>
+        </div>
+      </div>
+    </main>
+  )
+}
