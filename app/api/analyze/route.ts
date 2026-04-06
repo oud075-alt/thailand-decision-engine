@@ -2,10 +2,45 @@ import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
 
+// ===== LIMIT LOGIC =====
+const requestCounts = new Map<string, { count: number; date: string }>();
+
+function checkLimit(ip: string) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const user = requestCounts.get(ip);
+
+  if (!user || user.date !== today) {
+    requestCounts.set(ip, { count: 1, date: today });
+    return true;
+  }
+
+  if (user.count >= 3) {
+    return false;
+  }
+
+  user.count += 1;
+  return true;
+}
+// ======================
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    // ===== CHECK LIMIT =====
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
 
+    if (!checkLimit(ip)) {
+      return Response.json(
+        {
+          result:
+            "You have reached the daily limit (3 requests). Please try again tomorrow.",
+        },
+        { status: 429 }
+      );
+    }
+    // ======================
+
+    const body = await req.json();
     const { language, province, days, travelType, budget, style, concern } =
       body;
 
@@ -16,9 +51,6 @@ export async function POST(req: Request) {
     const prompt = `
 You are a local Thailand travel decision assistant.
 
-The traveler needs help deciding how to plan a trip in ${province}.
-Answer in ${language}.
-
 Traveler profile:
 - Province: ${province}
 - Days: ${days}
@@ -27,37 +59,27 @@ Traveler profile:
 - Style: ${style}
 - Main concern: ${concern}
 
-Your job is NOT to describe options endlessly.
-Your job is to recommend the best direction clearly.
+Answer in ${language}.
 
 Rules:
-- Do NOT start with greeting
-- Do NOT sound like AI, a blog, or tourism website
 - Be decisive
-- Pick the best direction based on the traveler profile
-- Explain in simple, practical language
-- Mention likely best area / trip style / pace / spending logic when useful
-- Include rough real-world guidance when possible
-- If a common mistake exists, warn them directly
-- Keep it useful and grounded
+- Do NOT start with greeting
+- Sound like a real local, not AI
+- Give practical advice (area, timing, budget reality)
+- Warn if something is a bad idea
 - No emojis
-- No markdown bold
-- No long generic filler
+- No fluff
 
-You MUST use this exact structure:
+Structure EXACTLY:
 
 Short Answer:
-[give the best overall direction immediately]
+[best direction immediately]
 
 Why:
-[explain the logic in a practical local way]
+[practical explanation]
 
 What to do next:
-[give simple next steps, what to prioritize, what to avoid, and rough timing/budget if useful]
-
-Do not be neutral.
-Do not just restate the inputs.
-Make an actual recommendation.
+[clear next steps, priorities, timing, budget hint]
 `;
 
     const completion = await openai.chat.completions.create({
@@ -66,7 +88,7 @@ Make an actual recommendation.
         {
           role: "system",
           content:
-            "You help travelers make practical decisions in Thailand. Be clear, grounded, and local-sounding.",
+            "You help travelers make practical decisions in Thailand.",
         },
         { role: "user", content: prompt },
       ],
@@ -77,7 +99,7 @@ Make an actual recommendation.
       result: completion.choices[0].message.content,
     });
   } catch (error: any) {
-    console.error("ANALYZE_ROUTE_ERROR:", error);
+    console.error("ANALYZE_ERROR:", error);
 
     return Response.json(
       {

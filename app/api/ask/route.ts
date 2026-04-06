@@ -2,8 +2,44 @@ import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
 
+// ===== LIMIT LOGIC =====
+const requestCounts = new Map<string, { count: number; date: string }>();
+
+function checkLimit(ip: string) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const user = requestCounts.get(ip);
+
+  if (!user || user.date !== today) {
+    requestCounts.set(ip, { count: 1, date: today });
+    return true;
+  }
+
+  if (user.count >= 3) {
+    return false;
+  }
+
+  user.count += 1;
+  return true;
+}
+// ======================
+
 export async function POST(req: Request) {
   try {
+    // ===== CHECK LIMIT =====
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+
+    if (!checkLimit(ip)) {
+      return Response.json(
+        {
+          result:
+            "You have reached the daily limit (3 requests). Please try again tomorrow.",
+        },
+        { status: 429 }
+      );
+    }
+    // ======================
+
     const body = await req.json();
     const { question, language, province } = body;
 
@@ -17,33 +53,25 @@ You are a local Thailand travel decision assistant.
 The user is asking about travel in ${province}.
 Answer in ${language}.
 
-Your job is NOT to sound like AI, a guidebook, or customer support.
-Your job is to help the traveler decide fast and clearly.
-
 Rules:
 - Do NOT start with greeting
-- Do NOT say "it depends" unless truly necessary
-- Be direct, practical, and confident
-- Sound like a real local person helping a tourist
-- Include real-world details when useful: timing, area, transport, rough price, common local practice
-- If something is risky, inconvenient, or likely to fail, say it clearly
-- Prefer clarity over politeness
-- Keep it useful, not fancy
+- Be direct and practical
+- Sound like a real local person
+- Include real-world details (time, price, how things actually work)
+- Help the user DECIDE, not just explain
 - No emojis
-- No markdown bold
-- No bullet list unless needed
-- Never sound like a brochure
+- No marketing tone
 
-You MUST use this exact structure:
+Structure EXACTLY:
 
 Short Answer:
-[give the decision first in 1-2 sentences]
+[give clear decision]
 
 Why:
-[explain simply, like a local who knows how things actually work]
+[simple local explanation]
 
 What to do next:
-[give concrete next steps, including timing / price / safest move if possible]
+[actionable steps with time/price if possible]
 
 Question:
 ${question}
@@ -55,7 +83,7 @@ ${question}
         {
           role: "system",
           content:
-            "You help travelers make practical decisions in Thailand. Be clear, grounded, and local-sounding.",
+            "You help travelers make practical decisions in Thailand.",
         },
         { role: "user", content: prompt },
       ],
@@ -66,7 +94,7 @@ ${question}
       result: completion.choices[0].message.content,
     });
   } catch (error: any) {
-    console.error("ASK_ROUTE_ERROR:", error);
+    console.error("ASK_ERROR:", error);
 
     return Response.json(
       {
