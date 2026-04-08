@@ -35,49 +35,21 @@ function isRestrictedQuestion(question: string) {
     "visa",
     "e-visa",
     "immigration",
-    "immigration rules",
     "entry requirement",
-    "entry requirements",
     "enter thailand",
-    "entering thailand",
-    "re-enter",
-    "reentry",
-    "tm6",
-    "tm30",
-    "passport validity",
+    "passport",
     "customs",
-    "declare",
-    "declaration",
     "legal",
     "law",
-    "laws",
     "regulation",
-    "regulations",
-    "rule",
-    "rules",
-    "official requirement",
-    "official requirements",
     "insurance",
-    "travel insurance",
-    "mandatory insurance",
-    "required insurance",
-    "covid requirement",
-    "covid requirements",
-    "border control",
+    "covid",
     "embassy",
-    "consulate",
-    "work permit",
     "permit",
-    "residence permit",
     "overstay",
     "fine",
-    "fines",
-    "arrest",
     "illegal",
-    "allowed to bring",
-    "allowed to carry",
-    "prohibited item",
-    "prohibited items",
+    "prohibited",
   ];
 
   return restrictedKeywords.some((keyword) => q.includes(keyword));
@@ -87,24 +59,64 @@ function getRestrictedMessage(language: string) {
   const lang = language?.toLowerCase() || "english";
 
   if (lang.includes("thai")) {
-    return "ขออภัย เครื่องมือนี้ไม่ตอบเรื่องกฎหมาย วีซ่า ตม. ประกัน หรือกฎการเข้าประเทศ กรุณาตรวจสอบจากแหล่งข้อมูลทางการโดยตรง";
+    return "ขออภัย เครื่องมือนี้ไม่ตอบเรื่องกฎหมาย วีซ่า หรือกฎการเข้าประเทศ กรุณาตรวจสอบจากแหล่งทางการ";
   }
 
-  if (lang.includes("chinese")) {
-    return "抱歉，这个工具不回答法律、签证、移民、保险或入境规定相关问题。请直接查看官方信息来源。";
-  }
-
-  if (lang.includes("japanese")) {
-    return "申し訳ありません。このツールは法律、ビザ、入国管理、保険、入国条件に関する質問には対応していません。公式情報をご確認ください。";
-  }
-
-  if (lang.includes("hindi")) {
-    return "क्षमा करें, यह टूल कानून, वीज़ा, इमिग्रेशन, इंश्योरेंस या एंट्री नियमों से जुड़े सवालों का जवाब नहीं देता। कृपया आधिकारिक स्रोत देखें।";
-  }
-
-  return "Sorry, this tool does not answer questions about laws, visas, immigration, insurance, or entry requirements. Please check official sources directly.";
+  return "Sorry, this tool does not answer questions about laws, visas, or entry requirements. Please check official sources.";
 }
 // ======================
+
+type DecisionOption = {
+  option: string;
+  vibe: string;
+  bestFor: string;
+  whyItFits: string;
+};
+
+type DecisionResult = {
+  intro: string;
+  options: DecisionOption[];
+  quickGuide: string[];
+  finalRecommendation: string;
+  optionalContext: string;
+};
+
+function extractJson(text: string): string {
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error("No valid JSON object found in model response");
+  }
+
+  return text.slice(firstBrace, lastBrace + 1);
+}
+
+function sanitizeDecisionResult(data: any): DecisionResult {
+  const options = Array.isArray(data?.options)
+    ? data.options.slice(0, 3).map((item: any) => ({
+        option: String(item?.option || "").trim(),
+        vibe: String(item?.vibe || "").trim(),
+        bestFor: String(item?.bestFor || "").trim(),
+        whyItFits: String(item?.whyItFits || "").trim(),
+      }))
+    : [];
+
+  const quickGuide = Array.isArray(data?.quickGuide)
+    ? data.quickGuide
+        .slice(0, 3)
+        .map((item: any) => String(item || "").trim())
+        .filter(Boolean)
+    : [];
+
+  return {
+    intro: String(data?.intro || "").trim(),
+    options,
+    quickGuide,
+    finalRecommendation: String(data?.finalRecommendation || "").trim(),
+    optionalContext: String(data?.optionalContext || "").trim(),
+  };
+}
 
 export async function POST(req: Request) {
   try {
@@ -115,8 +127,13 @@ export async function POST(req: Request) {
     if (!checkLimit(ip)) {
       return Response.json(
         {
-          result:
-            "You have reached the daily limit (3 requests). Please try again tomorrow.",
+          result: {
+            intro: "You have reached the daily limit.",
+            options: [],
+            quickGuide: [],
+            finalRecommendation: "Please try again tomorrow.",
+            optionalContext: "",
+          },
         },
         { status: 429 }
       );
@@ -129,16 +146,28 @@ export async function POST(req: Request) {
     if (!question || typeof question !== "string") {
       return Response.json(
         {
-          result: "Please enter a question.",
+          result: {
+            intro: "Please enter a question.",
+            options: [],
+            quickGuide: [],
+            finalRecommendation: "",
+            optionalContext: "",
+          },
         },
         { status: 400 }
       );
     }
 
-    // ===== BLOCK RESTRICTED TOPICS =====
+    // ===== BLOCK RESTRICTED =====
     if (isRestrictedQuestion(question)) {
       return Response.json({
-        result: getRestrictedMessage(language),
+        result: {
+          intro: getRestrictedMessage(language),
+          options: [],
+          quickGuide: [],
+          finalRecommendation: "",
+          optionalContext: "",
+        },
       });
     }
     // ======================
@@ -148,57 +177,91 @@ export async function POST(req: Request) {
     });
 
     const prompt = `
-You are a local Thailand travel decision assistant.
+You are a Thailand travel DECISION ENGINE.
 
-The user is asking about travel in ${province}.
-Answer in ${language}.
+Your job is NOT to explain.
+Your job is to HELP THE USER DECIDE FAST.
+
+User context:
+- Location: ${province}
+- Language: ${language}
+
+PRODUCT GOAL:
+- Reduce confusion
+- Narrow choices
+- Make the user feel they can stop thinking now
+
+STRICT RULES:
+- ALWAYS give only 2 or 3 options
+- ALWAYS compare options
+- ALWAYS push toward one strongest match
+- NO long explanations
+- NO generic travel guide tone
+- NO markdown table
+- NO numbered list
+- NO extra commentary outside JSON
+- Sound practical, confident, and human
+- Keep every field short and easy to scan
+
+Return ONLY valid JSON in this exact shape:
+
+{
+  "intro": "short human intro",
+  "options": [
+    {
+      "option": "area or choice name",
+      "vibe": "short vibe",
+      "bestFor": "who it fits",
+      "whyItFits": "why it fits"
+    }
+  ],
+  "quickGuide": [
+    "If you want X → Option A",
+    "If you want Y → Option B"
+  ],
+  "finalRecommendation": "Best choice for YOU → Option A",
+  "optionalContext": "short extra context"
+}
+
+REQUIREMENTS:
+- options must contain 2 or 3 items
+- quickGuide should contain 2 or 3 short lines
+- intro must be short, direct, and calming
+- optionalContext must be short
+- finalRecommendation must be decisive and personal
+- Avoid weak wording like "it depends" or "you could also"
+- Do not sound like a blog or travel article
+- Each option should feel clearly different from the others
+- The finalRecommendation should match the strongest option in the list
 
 IMPORTANT BOUNDARY:
-- Only help with travel planning, places, transport, timing, budget, weather patterns, trip style, and visitor experience.
-- Do NOT answer about laws, visas, immigration rules, entry requirements, insurance, customs, or legal requirements.
-- If the user's question is about any of those restricted topics, refuse briefly and tell them to check official sources.
+- Only help with travel decisions
+- Do NOT answer about laws, visas, immigration, insurance, customs, or legal requirements
+- If question is about those, return JSON with the refusal in "intro" and leave other fields empty
 
-Rules:
-- Do NOT start with greeting
-- Be direct and practical
-- Sound like a real local person
-- Include real-world details (time, price, transport, how things usually work)
-- Help the user decide, not just explain
-- No emojis
-- No marketing tone
-- If something is uncertain, say so clearly
-- Do not invent official rules or legal facts
-
-Structure EXACTLY:
-
-Short Answer:
-[give clear decision]
-
-Why:
-[simple local explanation]
-
-What to do next:
-[actionable steps with time/price if possible]
-
-Question:
+User question:
 ${question}
 `;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
           content:
-            "You help travelers make practical decisions in Thailand. You must refuse questions about laws, visas, immigration, insurance, customs, or entry rules, and redirect users to official sources.",
+            "You are a strict decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like.",
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.7,
+      temperature: 0.3,
     });
 
+    const raw = completion.choices[0].message.content || "";
+    const parsed = JSON.parse(extractJson(raw));
+    const result = sanitizeDecisionResult(parsed);
+
     return Response.json({
-      result: completion.choices[0].message.content,
+      result,
     });
   } catch (error: any) {
     console.error("ASK_ERROR:", error);

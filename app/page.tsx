@@ -1,417 +1,123 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 
-const provinces = [
-  "Bangkok",
-  "Amnat Charoen",
-  "Ang Thong",
-  "Bueng Kan",
-  "Buriram",
-  "Chachoengsao",
-  "Chai Nat",
-  "Chaiyaphum",
-  "Chanthaburi",
-  "Chiang Mai",
-  "Chiang Rai",
-  "Chonburi",
-  "Chumphon",
-  "Kalasin",
-  "Kamphaeng Phet",
-  "Kanchanaburi",
-  "Khon Kaen",
-  "Krabi",
-  "Lampang",
-  "Lamphun",
-  "Loei",
-  "Lopburi",
-  "Mae Hong Son",
-  "Maha Sarakham",
-  "Mukdahan",
-  "Nakhon Nayok",
-  "Nakhon Pathom",
-  "Nakhon Phanom",
-  "Nakhon Ratchasima",
-  "Nakhon Sawan",
-  "Nakhon Si Thammarat",
-  "Nan",
-  "Narathiwat",
-  "Nong Bua Lamphu",
-  "Nong Khai",
-  "Nonthaburi",
-  "Pathum Thani",
-  "Pattani",
-  "Phang Nga",
-  "Phatthalung",
-  "Phayao",
-  "Phetchabun",
-  "Phetchaburi",
-  "Phichit",
-  "Phitsanulok",
-  "Phra Nakhon Si Ayutthaya",
-  "Phrae",
-  "Phuket",
-  "Prachinburi",
-  "Prachuap Khiri Khan",
-  "Ranong",
-  "Ratchaburi",
-  "Rayong",
-  "Roi Et",
-  "Sa Kaeo",
-  "Sakon Nakhon",
-  "Samut Prakan",
-  "Samut Sakhon",
-  "Samut Songkhram",
-  "Saraburi",
-  "Satun",
-  "Sing Buri",
-  "Sisaket",
-  "Songkhla",
-  "Sukhothai",
-  "Suphan Buri",
-  "Surat Thani",
-  "Surin",
-  "Tak",
-  "Trang",
-  "Trat",
-  "Ubon Ratchathani",
-  "Udon Thani",
-  "Uthai Thani",
-  "Uttaradit",
-  "Yala",
-  "Yasothon",
-]
+type DecisionOption = {
+  option: string;
+  vibe: string;
+  bestFor: string;
+  whyItFits: string;
+};
 
-const provinceThai: Record<string, string> = {
-  Bangkok: "กรุงเทพมหานคร",
-  "Amnat Charoen": "อำนาจเจริญ",
-  "Ang Thong": "อ่างทอง",
-  "Bueng Kan": "บึงกาฬ",
-  Buriram: "บุรีรัมย์",
-  Chachoengsao: "ฉะเชิงเทรา",
-  "Chai Nat": "ชัยนาท",
-  Chaiyaphum: "ชัยภูมิ",
-  Chanthaburi: "จันทบุรี",
-  "Chiang Mai": "เชียงใหม่",
-  "Chiang Rai": "เชียงราย",
-  Chonburi: "ชลบุรี",
-  Chumphon: "ชุมพร",
-  Kalasin: "กาฬสินธุ์",
-  "Kamphaeng Phet": "กำแพงเพชร",
-  Kanchanaburi: "กาญจนบุรี",
-  "Khon Kaen": "ขอนแก่น",
-  Krabi: "กระบี่",
-  Lampang: "ลำปาง",
-  Lamphun: "ลำพูน",
-  Loei: "เลย",
-  Lopburi: "ลพบุรี",
-  "Mae Hong Son": "แม่ฮ่องสอน",
-  "Maha Sarakham": "มหาสารคาม",
-  Mukdahan: "มุกดาหาร",
-  "Nakhon Nayok": "นครนายก",
-  "Nakhon Pathom": "นครปฐม",
-  "Nakhon Phanom": "นครพนม",
-  "Nakhon Ratchasima": "นครราชสีมา",
-  "Nakhon Sawan": "นครสวรรค์",
-  "Nakhon Si Thammarat": "นครศรีธรรมราช",
-  Nan: "น่าน",
-  Narathiwat: "นราธิวาส",
-  "Nong Bua Lamphu": "หนองบัวลำภู",
-  "Nong Khai": "หนองคาย",
-  Nonthaburi: "นนทบุรี",
-  "Pathum Thani": "ปทุมธานี",
-  Pattani: "ปัตตานี",
-  "Phang Nga": "พังงา",
-  Phatthalung: "พัทลุง",
-  Phayao: "พะเยา",
-  Phetchabun: "เพชรบูรณ์",
-  Phetchaburi: "เพชรบุรี",
-  Phichit: "พิจิตร",
-  Phitsanulok: "พิษณุโลก",
-  "Phra Nakhon Si Ayutthaya": "พระนครศรีอยุธยา",
-  Phrae: "แพร่",
-  Phuket: "ภูเก็ต",
-  Prachinburi: "ปราจีนบุรี",
-  "Prachuap Khiri Khan": "ประจวบคีรีขันธ์",
-  Ranong: "ระนอง",
-  Ratchaburi: "ราชบุรี",
-  Rayong: "ระยอง",
-  "Roi Et": "ร้อยเอ็ด",
-  "Sa Kaeo": "สระแก้ว",
-  "Sakon Nakhon": "สกลนคร",
-  "Samut Prakan": "สมุทรปราการ",
-  "Samut Sakhon": "สมุทรสาคร",
-  "Samut Songkhram": "สมุทรสงคราม",
-  Saraburi: "สระบุรี",
-  Satun: "สตูล",
-  "Sing Buri": "สิงห์บุรี",
-  Sisaket: "ศรีสะเกษ",
-  Songkhla: "สงขลา",
-  Sukhothai: "สุโขทัย",
-  "Suphan Buri": "สุพรรณบุรี",
-  "Surat Thani": "สุราษฎร์ธานี",
-  Surin: "สุรินทร์",
-  Tak: "ตาก",
-  Trang: "ตรัง",
-  Trat: "ตราด",
-  "Ubon Ratchathani": "อุบลราชธานี",
-  "Udon Thani": "อุดรธานี",
-  "Uthai Thani": "อุทัยธานี",
-  Uttaradit: "อุตรดิตถ์",
-  Yala: "ยะลา",
-  Yasothon: "ยโสธร",
-}
+type DecisionResult = {
+  intro: string;
+  options: DecisionOption[];
+  quickGuide: string[];
+  finalRecommendation: string;
+  optionalContext: string;
+};
 
-const ui: Record<string, any> = {
-  English: {
-    title: "Thailand Decision Engine",
-    subtitle:
-      "Choose your destination, travel style, and trip type to get a clearer travel decision.",
-    modeDecision: "Decision Mode",
-    modeAsk: "Ask Mode",
-    askPlaceholder:
-      "Example: Phi Phi or Hong? / Is taxi expensive? / Early flight, what time should I leave?",
-    askButton: "Ask",
-    language: "Language",
-    province: "Province",
-    days: "Days",
-    travelType: "Travel type",
-    budget: "Budget",
-    style: "Style",
-    concern: "Main concern",
-    button: "Get Decision",
-    thinking: "Thinking...",
-    error: "Something went wrong",
-    noResult: "No result",
-    days1: "1-3 days",
-    days2: "4-7 days",
-    days3: "7+ days",
-    solo: "solo",
-    couple: "couple",
-    family: "family",
-    friends: "friends",
-    budget1: "budget",
-    budget2: "mid",
-    budget3: "luxury",
-    style1: "relax",
-    style2: "explore",
-    style3: "party",
-    style4: "mixed",
-    concern1: "wrong location",
-    concern2: "wasted time",
-    concern3: "overpaying",
-    concern4: "don't know where to start",
-    provinceLabel: (name: string) => name,
-  },
-  Thai: {
-    title: "เครื่องช่วยตัดสินใจเที่ยวไทย",
-    subtitle:
-      "เลือกจังหวัด รูปแบบการเที่ยว และสไตล์การเดินทาง เพื่อให้ได้คำแนะนำที่ชัดขึ้นและตัดสินใจง่ายขึ้น",
-    modeDecision: "โหมดเลือกให้",
-    modeAsk: "โหมดถามตรงๆ",
-    askPlaceholder:
-      "เช่น: ไป phi phi หรือ hong ดี / taxi กระบี่แพงไหม / flight เช้าควรออกกี่โมง",
-    askButton: "ถามเลย",
-    language: "ภาษา",
-    province: "จังหวัด",
-    days: "จำนวนวัน",
-    travelType: "ลักษณะการเดินทาง",
-    budget: "งบประมาณ",
-    style: "สไตล์เที่ยว",
-    concern: "สิ่งที่กังวลที่สุด",
-    button: "ขอคำแนะนำ",
-    thinking: "กำลังคิด...",
-    error: "เกิดข้อผิดพลาด",
-    noResult: "ยังไม่มีผลลัพธ์",
-    days1: "1-3 วัน",
-    days2: "4-7 วัน",
-    days3: "7 วันขึ้นไป",
-    solo: "เที่ยวคนเดียว",
-    couple: "คู่รัก",
-    family: "ครอบครัว",
-    friends: "เพื่อน",
-    budget1: "ประหยัด",
-    budget2: "ปานกลาง",
-    budget3: "หรู",
-    style1: "พักผ่อน",
-    style2: "เที่ยวสำรวจ",
-    style3: "สายปาร์ตี้",
-    style4: "ผสมหลายแบบ",
-    concern1: "กลัวเลือกพื้นที่ผิด",
-    concern2: "กลัวเสียเวลา",
-    concern3: "กลัวจ่ายแพงเกินไป",
-    concern4: "ไม่รู้จะเริ่มจากตรงไหน",
-    provinceLabel: (name: string) => provinceThai[name] || name,
-  },
-  Chinese: {
-    title: "泰国旅行决策助手",
-    subtitle: "选择目的地、省份、旅行方式和风格，帮助你更快做出更清晰的旅行决定。",
-    modeDecision: "选择模式",
-    modeAsk: "提问模式",
-    askPlaceholder:
-      "例如：Phi Phi 还是 Hong？/ 出租车贵吗？/ 早班机几点出发？",
-    askButton: "提问",
-    language: "语言",
-    province: "省份",
-    days: "天数",
-    travelType: "出行类型",
-    budget: "预算",
-    style: "旅行风格",
-    concern: "最担心的问题",
-    button: "获取建议",
-    thinking: "正在分析...",
-    error: "发生错误",
-    noResult: "暂无结果",
-    days1: "1-3天",
-    days2: "4-7天",
-    days3: "7天以上",
-    solo: "独自旅行",
-    couple: "情侣",
-    family: "家庭",
-    friends: "朋友",
-    budget1: "经济型",
-    budget2: "中等",
-    budget3: "高端",
-    style1: "放松休闲",
-    style2: "探索体验",
-    style3: "夜生活/派对",
-    style4: "混合型",
-    concern1: "担心选错地方",
-    concern2: "担心浪费时间",
-    concern3: "担心花太多钱",
-    concern4: "不知道从哪里开始",
-    provinceLabel: (name: string) => name,
-  },
-  Hindi: {
-    title: "थाईलैंड ट्रैवल डिसीजन इंजन",
-    subtitle:
-      "अपनी मंज़िल, यात्रा शैली और ट्रिप प्रकार चुनें ताकि आपको ज़्यादा साफ़ और आसान निर्णय मिल सके।",
-    modeDecision: "डिसीजन मोड",
-    modeAsk: "आस्क मोड",
-    askPlaceholder:
-      "उदाहरण: Phi Phi या Hong? / टैक्सी महंगी है? / सुबह की फ्लाइट के लिए कितने बजे निकलें?",
-    askButton: "पूछें",
-    language: "भाषा",
-    province: "प्रांत",
-    days: "दिन",
-    travelType: "यात्रा प्रकार",
-    budget: "बजट",
-    style: "यात्रा शैली",
-    concern: "मुख्य चिंता",
-    button: "सलाह पाएं",
-    thinking: "सोचा जा रहा है...",
-    error: "कुछ गड़बड़ हो गई",
-    noResult: "कोई परिणाम नहीं",
-    days1: "1-3 दिन",
-    days2: "4-7 दिन",
-    days3: "7+ दिन",
-    solo: "अकेले",
-    couple: "कपल",
-    family: "परिवार",
-    friends: "दोस्त",
-    budget1: "कम बजट",
-    budget2: "मध्यम",
-    budget3: "लक्ज़री",
-    style1: "आराम",
-    style2: "घूमना-खोजना",
-    style3: "पार्टी",
-    style4: "मिक्स",
-    concern1: "गलत जगह चुनने का डर",
-    concern2: "समय बर्बाद होने का डर",
-    concern3: "ज़्यादा खर्च होने का डर",
-    concern4: "समझ नहीं आ रहा कहाँ से शुरू करें",
-    provinceLabel: (name: string) => name,
-  },
-  Japanese: {
-    title: "タイ旅行ディシジョンエンジン",
-    subtitle:
-      "行き先、旅のタイプ、スタイルを選ぶと、より分かりやすく旅の判断ができます。",
-    modeDecision: "選択モード",
-    modeAsk: "質問モード",
-    askPlaceholder:
-      "例: Phi Phi と Hong どっち？ / タクシー高い？ / 早朝便は何時に出ればいい？",
-    askButton: "質問する",
-    language: "言語",
-    province: "県",
-    days: "日数",
-    travelType: "旅行タイプ",
-    budget: "予算",
-    style: "旅のスタイル",
-    concern: "いちばん心配なこと",
-    button: "提案を見る",
-    thinking: "考え中...",
-    error: "エラーが発生しました",
-    noResult: "結果がありません",
-    days1: "1-3日",
-    days2: "4-7日",
-    days3: "7日以上",
-    solo: "一人旅",
-    couple: "カップル",
-    family: "家族",
-    friends: "友人",
-    budget1: "節約",
-    budget2: "中間",
-    budget3: "高級",
-    style1: "のんびり",
-    style2: "探索",
-    style3: "パーティー",
-    style4: "ミックス",
-    concern1: "場所選びを間違えたくない",
-    concern2: "時間を無駄にしたくない",
-    concern3: "高くつきすぎるのが不安",
-    concern4: "何から始めればいいか分からない",
-    provinceLabel: (name: string) => name,
-  },
+function extractPlace(text: string) {
+  if (!text) return "";
+  const parts = text.split("→");
+  return parts.length > 1 ? parts[1].trim() : text.trim();
 }
 
 export default function Home() {
-  const [language, setLanguage] = useState("English")
-  const [province, setProvince] = useState("Krabi")
-  const [days, setDays] = useState("1-3")
-  const [travelType, setTravelType] = useState("solo")
-  const [budget, setBudget] = useState("budget")
-  const [style, setStyle] = useState("relax")
-  const [concern, setConcern] = useState("wrong location")
-  const [mode, setMode] = useState("decision")
-  const [question, setQuestion] = useState("")
-  const [result, setResult] = useState("")
-  const [loading, setLoading] = useState(false)
+  const provinces = [
+    "Bangkok",
+    "Amnat Charoen",
+    "Ang Thong",
+    "Bueng Kan",
+    "Buriram",
+    "Chachoengsao",
+    "Chai Nat",
+    "Chaiyaphum",
+    "Chanthaburi",
+    "Chiang Mai",
+    "Chiang Rai",
+    "Chonburi",
+    "Chumphon",
+    "Kalasin",
+    "Kamphaeng Phet",
+    "Kanchanaburi",
+    "Khon Kaen",
+    "Krabi",
+    "Lampang",
+    "Lamphun",
+    "Loei",
+    "Lopburi",
+    "Mae Hong Son",
+    "Maha Sarakham",
+    "Mukdahan",
+    "Nakhon Nayok",
+    "Nakhon Pathom",
+    "Nakhon Phanom",
+    "Nakhon Ratchasima",
+    "Nakhon Sawan",
+    "Nakhon Si Thammarat",
+    "Nan",
+    "Narathiwat",
+    "Nong Bua Lamphu",
+    "Nong Khai",
+    "Nonthaburi",
+    "Pathum Thani",
+    "Pattani",
+    "Phang Nga",
+    "Phatthalung",
+    "Phayao",
+    "Phetchabun",
+    "Phetchaburi",
+    "Phichit",
+    "Phitsanulok",
+    "Phra Nakhon Si Ayutthaya",
+    "Phrae",
+    "Phuket",
+    "Prachinburi",
+    "Prachuap Khiri Khan",
+    "Ranong",
+    "Ratchaburi",
+    "Rayong",
+    "Roi Et",
+    "Sa Kaeo",
+    "Sakon Nakhon",
+    "Samut Prakan",
+    "Samut Sakhon",
+    "Samut Songkhram",
+    "Saraburi",
+    "Satun",
+    "Sing Buri",
+    "Sisaket",
+    "Songkhla",
+    "Sukhothai",
+    "Suphan Buri",
+    "Surat Thani",
+    "Surin",
+    "Tak",
+    "Trang",
+    "Trat",
+    "Ubon Ratchathani",
+    "Udon Thani",
+    "Uthai Thani",
+    "Uttaradit",
+    "Yala",
+    "Yasothon",
+  ];
 
-  const t = ui[language] || ui.English
+  const [province, setProvince] = useState("Krabi");
+  const [days, setDays] = useState("1-3 days");
+  const [travelType, setTravelType] = useState("friends");
+  const [budget, setBudget] = useState("mid");
+  const [style, setStyle] = useState("explore");
+  const [concern, setConcern] = useState("wrong location");
+  const [result, setResult] = useState<DecisionResult | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    setLoading(true)
-    setResult("")
+    setLoading(true);
+    setResult(null);
 
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          language,
-          province,
-          days,
-          travelType,
-          budget,
-          style,
-          concern,
-        }),
-      })
-
-      const data = await res.json()
-      setResult(data.result || t.noResult)
-    } catch (error) {
-      setResult(t.error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAsk = async () => {
-    setLoading(true)
-    setResult("")
+    const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}.`;
 
     try {
       const res = await fetch("/api/ask", {
@@ -420,238 +126,383 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          language,
-          province,
           question,
+          province,
+          language: "English",
         }),
-      })
+      });
 
-      const data = await res.json()
-      setResult(data.result || t.noResult)
-    } catch (error) {
-      setResult(t.error)
+      const data = await res.json();
+      setResult(data.result || null);
+    } catch (err) {
+      setResult({
+        intro: "Something went wrong.",
+        options: [],
+        quickGuide: [],
+        finalRecommendation: "",
+        optionalContext: "",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <main
-      style={{
-        maxWidth: "720px",
-        margin: "40px auto",
-        padding: "24px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>{t.title}</h1>
-
-      <p style={{ marginBottom: "24px", color: "#555", lineHeight: 1.6 }}>
-        {t.subtitle}
-      </p>
-
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-        <button
-          onClick={() => setMode("decision")}
-          style={{
-            padding: "10px 14px",
-            cursor: "pointer",
-            background: mode === "decision" ? "#111" : "#eee",
-            color: mode === "decision" ? "#fff" : "#000",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-          }}
-        >
-          {t.modeDecision}
-        </button>
-
-        <button
-          onClick={() => setMode("ask")}
-          style={{
-            padding: "10px 14px",
-            cursor: "pointer",
-            background: mode === "ask" ? "#111" : "#eee",
-            color: mode === "ask" ? "#fff" : "#000",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-          }}
-        >
-          {t.modeAsk}
-        </button>
+    <main style={styles.page}>
+      <div style={styles.header}>
+        <h1 style={styles.title}>Thailand Decision Engine</h1>
+        <p style={styles.subtitle}>
+          Get clear travel decisions in seconds. No confusion.
+        </p>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
-        <label>
-          <div style={{ marginBottom: "6px" }}>{t.language}</div>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            style={{ width: "100%", padding: "10px" }}
-          >
-            <option value="English">English</option>
-            <option value="Chinese">中文</option>
-            <option value="Hindi">हिन्दी</option>
-            <option value="Japanese">日本語</option>
-            <option value="Thai">ไทย</option>
-          </select>
-        </label>
-
-        <label>
-          <div style={{ marginBottom: "6px" }}>{t.province}</div>
-          <select
+      <div style={styles.card}>
+        <div style={styles.grid}>
+          <Select
+            label="Province"
             value={province}
-            onChange={(e) => setProvince(e.target.value)}
-            style={{ width: "100%", padding: "10px" }}
-          >
-            {provinces.map((item) => (
-              <option key={item} value={item}>
-                {t.provinceLabel(item)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {mode === "decision" && (
-          <>
-            <label>
-              <div style={{ marginBottom: "6px" }}>{t.days}</div>
-              <select
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-                style={{ width: "100%", padding: "10px" }}
-              >
-                <option value="1-3">{t.days1}</option>
-                <option value="4-7">{t.days2}</option>
-                <option value="7+">{t.days3}</option>
-              </select>
-            </label>
-
-            <label>
-              <div style={{ marginBottom: "6px" }}>{t.travelType}</div>
-              <select
-                value={travelType}
-                onChange={(e) => setTravelType(e.target.value)}
-                style={{ width: "100%", padding: "10px" }}
-              >
-                <option value="solo">{t.solo}</option>
-                <option value="couple">{t.couple}</option>
-                <option value="family">{t.family}</option>
-                <option value="friends">{t.friends}</option>
-              </select>
-            </label>
-
-            <label>
-              <div style={{ marginBottom: "6px" }}>{t.budget}</div>
-              <select
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                style={{ width: "100%", padding: "10px" }}
-              >
-                <option value="budget">{t.budget1}</option>
-                <option value="mid">{t.budget2}</option>
-                <option value="luxury">{t.budget3}</option>
-              </select>
-            </label>
-
-            <label>
-              <div style={{ marginBottom: "6px" }}>{t.style}</div>
-              <select
-                value={style}
-                onChange={(e) => setStyle(e.target.value)}
-                style={{ width: "100%", padding: "10px" }}
-              >
-                <option value="relax">{t.style1}</option>
-                <option value="explore">{t.style2}</option>
-                <option value="party">{t.style3}</option>
-                <option value="mixed">{t.style4}</option>
-              </select>
-            </label>
-
-            <label>
-              <div style={{ marginBottom: "6px" }}>{t.concern}</div>
-              <select
-                value={concern}
-                onChange={(e) => setConcern(e.target.value)}
-                style={{ width: "100%", padding: "10px" }}
-              >
-                <option value="wrong location">{t.concern1}</option>
-                <option value="wasted time">{t.concern2}</option>
-                <option value="overpaying">{t.concern3}</option>
-                <option value="don't know where to start">{t.concern4}</option>
-              </select>
-            </label>
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                marginTop: "8px",
-                cursor: "pointer",
-              }}
-            >
-              {loading ? t.thinking : t.button}
-            </button>
-          </>
-        )}
-
-        {mode === "ask" && (
-          <>
-            <textarea
-              placeholder={t.askPlaceholder}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              style={{
-                width: "100%",
-                height: "120px",
-                padding: "12px",
-                resize: "vertical",
-                fontFamily: "inherit",
-              }}
-            />
-
-            <button
-              onClick={handleAsk}
-              disabled={loading}
-              style={{
-                padding: "12px",
-                marginTop: "8px",
-                cursor: "pointer",
-              }}
-            >
-              {loading ? t.thinking : t.askButton}
-            </button>
-          </>
-        )}
-
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "16px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            background: "#fafafa",
-            minHeight: "160px",
-          }}
-        >
-          <pre
-            style={{
-              whiteSpace: "pre-wrap",
-              margin: 0,
-              fontFamily: "inherit",
-              lineHeight: 1.65,
-            }}
-          >
-            {result}
-          </pre>
+            setValue={setProvince}
+            options={provinces}
+          />
+          <Select
+            label="Days"
+            value={days}
+            setValue={setDays}
+            options={["1-3 days", "4-7 days", "7+ days"]}
+          />
+          <Select
+            label="Travel type"
+            value={travelType}
+            setValue={setTravelType}
+            options={["solo", "couple", "friends", "family"]}
+          />
+          <Select
+            label="Budget"
+            value={budget}
+            setValue={setBudget}
+            options={["budget", "mid", "luxury"]}
+          />
+          <Select
+            label="Style"
+            value={style}
+            setValue={setStyle}
+            options={["relax", "explore", "party"]}
+          />
+          <Select
+            label="Main concern"
+            value={concern}
+            setValue={setConcern}
+            options={["wrong location", "wasted time", "overpaying"]}
+          />
         </div>
+
+        <button style={styles.button} onClick={handleSubmit}>
+          {loading ? "Thinking..." : "Get Decision"}
+        </button>
       </div>
+
+      {result && (
+        <div style={styles.resultBox}>
+          <StructuredResult result={result} province={province} />
+        </div>
+      )}
     </main>
-  )
+  );
 }
+
+function Select({ label, value, setValue, options }: any) {
+  return (
+    <div>
+      <div style={styles.label}>{label}</div>
+      <select
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        style={styles.select}
+      >
+        {options.map((o: string) => (
+          <option key={o}>{o}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function StructuredResult({
+  result,
+  province,
+}: {
+  result: DecisionResult;
+  province: string;
+}) {
+  const bestMatch = extractPlace(result.finalRecommendation);
+
+  return (
+    <div>
+      <h2 style={styles.resultTitle}>
+        Choose the best area for your stay in {province}.
+      </h2>
+
+      {bestMatch && (
+        <div style={styles.bestMatchBox}>
+          <span style={styles.bestMatchIcon}>✔</span>
+          <span>
+            <strong>Your best match:</strong> {bestMatch}
+          </span>
+        </div>
+      )}
+
+      {result.intro && <div style={styles.text}>{result.intro}</div>}
+
+      {result.options?.length > 0 && (
+        <>
+          <div style={styles.sectionTitle}>Best options</div>
+          <div style={styles.cardGrid}>
+            {result.options.map((item, index) => (
+              <div key={index} style={styles.optionCard}>
+                <div style={styles.optionTitle}>{item.option}</div>
+                <div style={styles.optionMeta}>
+                  <strong>Vibe:</strong> {item.vibe}
+                </div>
+                <div style={styles.optionMeta}>
+                  <strong>Best for:</strong> {item.bestFor}
+                </div>
+                <div style={styles.optionMeta}>
+                  <strong>Why it fits:</strong> {item.whyItFits}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {result.quickGuide?.length > 0 && (
+        <>
+          <div style={styles.sectionTitle}>How to choose</div>
+          <div style={styles.guideBox}>
+            {result.quickGuide.map((item, index) => (
+              <div key={index} style={styles.guideItem}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+     
+
+      {result.optionalContext && (
+        <div style={styles.context}>{result.optionalContext}</div>
+      )}
+
+      {bestMatch && (
+        <div style={styles.nextStepBox}>
+          <div style={styles.nextStepTitle}>Next step</div>
+          <div style={styles.nextStepItem}>- Search hotels in {bestMatch}</div>
+          <div style={styles.nextStepItem}>
+            - Focus on areas close to main attractions
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles: any = {
+  page: {
+    maxWidth: 720,
+    margin: "40px auto",
+    padding: 20,
+    fontFamily: "system-ui",
+  },
+
+  header: {
+    marginBottom: 20,
+  },
+
+  title: {
+    fontSize: 32,
+    fontWeight: 700,
+  },
+
+  subtitle: {
+    color: "#666",
+  },
+
+  card: {
+    background: "#fff",
+    padding: 20,
+    borderRadius: 12,
+    border: "1px solid #eee",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    marginBottom: 20,
+  },
+
+  grid: {
+    display: "grid",
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  label: {
+    fontSize: 13,
+    marginBottom: 4,
+    color: "#666",
+  },
+
+  select: {
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+  },
+
+  button: {
+    width: "100%",
+    padding: 14,
+    background: "#111",
+    color: "#fff",
+    borderRadius: 10,
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+
+  resultBox: {
+    background: "#fafafa",
+    border: "1px solid #eee",
+    padding: 16,
+    borderRadius: 12,
+  },
+
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: 700,
+    marginBottom: 16,
+  },
+
+  bestMatchBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    background: "#111",
+    color: "#fff",
+    padding: "14px 16px",
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+
+  bestMatchIcon: {
+    fontSize: 16,
+    lineHeight: 1,
+  },
+
+  text: {
+    marginBottom: 8,
+    lineHeight: 1.6,
+  },
+
+  section: {
+    marginTop: 16,
+    marginBottom: 6,
+    fontWeight: 700,
+  },
+
+  tableRow: {
+    fontFamily: "monospace",
+    background: "#fff",
+    padding: 6,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+
+  recommend: {
+    marginTop: 16,
+    padding: 12,
+    background: "#111",
+    color: "#fff",
+    borderRadius: 10,
+    fontWeight: 600,
+  },
+
+  sectionTitle: {
+    marginTop: 20,
+    marginBottom: 10,
+    fontWeight: 700,
+    fontSize: 16,
+  },
+
+  cardGrid: {
+    display: "grid",
+    gap: 10,
+  },
+
+  optionCard: {
+    background: "#fff",
+    border: "1px solid #eee",
+    borderRadius: 10,
+    padding: 12,
+  },
+
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+
+  optionMeta: {
+    marginBottom: 6,
+    lineHeight: 1.5,
+    color: "#333",
+  },
+
+  guideBox: {
+    background: "#f9f9f9",
+    padding: 12,
+    borderRadius: 10,
+  },
+
+  guideItem: {
+    marginBottom: 6,
+  },
+
+  recommendWrap: {
+    marginTop: 16,
+  },
+
+  recommendLabel: {
+    marginBottom: 8,
+    fontWeight: 700,
+    fontSize: 14,
+    color: "#333",
+  },
+
+  recommendBox: {
+    padding: 14,
+    background: "#111",
+    color: "#fff",
+    borderRadius: 10,
+    fontWeight: 600,
+  },
+
+  context: {
+    marginTop: 12,
+    color: "#666",
+  },
+
+  nextStepBox: {
+    marginTop: 18,
+    padding: 12,
+    borderRadius: 10,
+    background: "#f3f3f3",
+  },
+
+  nextStepTitle: {
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+
+  nextStepItem: {
+    marginBottom: 4,
+    color: "#333",
+  },
+};
