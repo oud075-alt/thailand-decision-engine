@@ -112,10 +112,12 @@ export default function Home() {
   const [concern, setConcern] = useState("wrong location");
   const [result, setResult] = useState<DecisionResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
     setResult(null);
+    setCopied(false);
 
     const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}.`;
 
@@ -144,6 +146,29 @@ export default function Home() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: "Thailand Decision Engine",
+      text: result
+        ? `I used this Thailand travel tool and got a useful stay suggestion for ${province}.`
+        : "Not sure where to stay in Thailand? Try this decision tool.",
+      url: "https://thailand-decision-engine-z3xj.vercel.app/",
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareData.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Share failed:", error);
     }
   };
 
@@ -199,11 +224,31 @@ export default function Home() {
         <button style={styles.button} onClick={handleSubmit}>
           {loading ? "Thinking..." : "Get Decision"}
         </button>
+
+        <div style={styles.shareHintWrap}>
+          <div style={styles.shareHintText}>
+            Know someone planning a Thailand trip? Share this tool.
+          </div>
+
+          <button style={styles.shareButtonSecondary} onClick={handleShare}>
+            {copied ? "Link copied!" : "Share this tool"}
+          </button>
+        </div>
       </div>
 
       {result && (
         <div style={styles.resultBox}>
           <StructuredResult result={result} province={province} />
+
+          <div style={styles.resultShareWrap}>
+            <div style={styles.resultShareText}>
+              Traveling with others? Send this result before booking.
+            </div>
+
+            <button style={styles.shareButtonPrimary} onClick={handleShare}>
+              {copied ? "Link copied!" : "Share this result"}
+            </button>
+          </div>
         </div>
       )}
     </main>
@@ -288,8 +333,6 @@ function StructuredResult({
         </>
       )}
 
-     
-
       {result.optionalContext && (
         <div style={styles.context}>{result.optionalContext}</div>
       )}
@@ -363,6 +406,28 @@ const styles: any = {
     color: "#fff",
     borderRadius: 10,
     border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+
+  shareHintWrap: {
+    marginTop: 12,
+    textAlign: "center",
+  },
+
+  shareHintText: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 8,
+  },
+
+  shareButtonSecondary: {
+    width: "100%",
+    padding: 12,
+    background: "#fff",
+    color: "#111",
+    borderRadius: 10,
+    border: "1px solid #ddd",
     cursor: "pointer",
     fontWeight: 600,
   },
@@ -504,5 +569,28 @@ const styles: any = {
   nextStepItem: {
     marginBottom: 4,
     color: "#333",
+  },
+
+  resultShareWrap: {
+    marginTop: 18,
+    paddingTop: 16,
+    borderTop: "1px solid #eaeaea",
+  },
+
+  resultShareText: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 10,
+  },
+
+  shareButtonPrimary: {
+    width: "100%",
+    padding: 14,
+    background: "#111",
+    color: "#fff",
+    borderRadius: 10,
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
   },
 };
