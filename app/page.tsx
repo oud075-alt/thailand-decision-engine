@@ -109,6 +109,7 @@ export default function Home() {
   const [travelType, setTravelType] = useState("friends");
   const [budget, setBudget] = useState("mid");
   const [style, setStyle] = useState("explore");
+  const [extraPreference, setExtraPreference] = useState("");
   const [concern, setConcern] = useState("wrong location");
   const [result, setResult] = useState<DecisionResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -119,7 +120,7 @@ export default function Home() {
     setResult(null);
     setCopied(false);
 
-    const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}.`;
+    const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}. Extra preference: ${extraPreference}`;
 
     try {
       const res = await fetch("/api/ask", {
@@ -213,6 +214,17 @@ export default function Home() {
             setValue={setStyle}
             options={["relax", "explore", "party"]}
           />
+
+          <div>
+            <div style={styles.label}>What do you want most?</div>
+            <input
+              value={extraPreference}
+              onChange={(e) => setExtraPreference(e.target.value)}
+              placeholder="e.g. quiet beach, nightlife but not too crazy, near airport, snorkeling"
+              style={styles.input}
+            />
+          </div>
+
           <Select
             label="Main concern"
             value={concern}
@@ -397,6 +409,15 @@ const styles: any = {
     padding: 10,
     borderRadius: 8,
     border: "1px solid #ddd",
+  },
+
+  input: {
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    fontSize: 14,
+    boxSizing: "border-box",
   },
 
   button: {

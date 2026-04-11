@@ -298,11 +298,7 @@ function getProvinceHighlights(province: string) {
   const raw = province.trim();
   const compact = raw.replace(/\s+/g, "");
 
-  return (
-    PROVINCE_HIGHLIGHTS[raw] ||
-    PROVINCE_HIGHLIGHTS[compact] ||
-    []
-  );
+  return PROVINCE_HIGHLIGHTS[raw] || PROVINCE_HIGHLIGHTS[compact] || [];
 }
 
 export async function POST(req: Request) {
@@ -378,6 +374,7 @@ Your job is to HELP THE USER DECIDE FAST.
 User context:
 - Location: ${province}
 - Language: ${language}
+- User specific preference: included inside the question, must be considered strongly
 
 KNOWN MAJOR AREAS / ATTRACTIONS FOR THIS PROVINCE:
 ${provinceHintsText}
@@ -401,6 +398,7 @@ STRICT RULES:
 
 DECISION RULES:
 - Use REAL stay areas, islands, beach zones, mountain zones, old town zones, or famous travel bases inside that province
+- If the user gives a specific preference, prioritize it over generic recommendations
 - If the province has famous islands, beaches, waterfalls, mountain areas, or well-known tourist zones, you MUST consider them
 - Do NOT default only to city center unless city center is truly one of the strongest options
 - For provinces with famous islands, include those islands when relevant
@@ -454,7 +452,7 @@ ${question}
         {
           role: "system",
           content:
-            "You are a strict Thailand travel decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like. Use real famous stay areas and tourist zones for each province when relevant.",
+            "You are a strict Thailand travel decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like. Use real famous stay areas and tourist zones for each province when relevant. If the user adds a specific preference, treat it as a strong signal.",
         },
         { role: "user", content: prompt },
       ],
