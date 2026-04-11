@@ -118,6 +118,193 @@ function sanitizeDecisionResult(data: any): DecisionResult {
   };
 }
 
+const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
+  Bangkok: [
+    "Sukhumvit",
+    "Siam",
+    "Silom",
+    "Old Town",
+    "Chatuchak",
+    "Riverside",
+    "Khao San Road",
+  ],
+  Krabi: [
+    "Ao Nang",
+    "Railay Beach",
+    "Krabi Town",
+    "Klong Muang",
+    "Tubkaek",
+    "Phi Phi Islands",
+    "Hong Islands",
+    "Emerald Pool",
+    "Tiger Cave Temple",
+  ],
+  Phuket: [
+    "Patong",
+    "Kata",
+    "Karon",
+    "Old Town",
+    "Kamala",
+    "Bang Tao",
+    "Rawai",
+    "Nai Harn",
+    "Phi Phi day trip access",
+  ],
+  "Surat Thani": [
+    "Koh Samui",
+    "Chaweng",
+    "Lamai",
+    "Bophut / Fisherman's Village",
+    "Maenam",
+    "Choeng Mon",
+    "Koh Phangan",
+    "Haad Rin",
+    "Thong Sala",
+    "Srithanu",
+    "Koh Tao",
+    "Sairee Beach",
+    "Surat Thani City",
+    "Khao Sok access",
+  ],
+  PhangNga: [
+    "Khao Lak",
+    "Koh Yao Yai",
+    "Koh Yao Noi",
+    "Phang Nga Bay",
+    "Similan Islands access",
+    "Surin Islands access",
+    "Samet Nangshe",
+  ],
+  "Phang Nga": [
+    "Khao Lak",
+    "Koh Yao Yai",
+    "Koh Yao Noi",
+    "Phang Nga Bay",
+    "Similan Islands access",
+    "Surin Islands access",
+    "Samet Nangshe",
+  ],
+  ChiangMai: [
+    "Old City",
+    "Nimman",
+    "Riverside",
+    "Mae Rim",
+    "Doi Suthep",
+    "Mon Jam",
+    "Elephant sanctuary areas",
+  ],
+  "Chiang Mai": [
+    "Old City",
+    "Nimman",
+    "Riverside",
+    "Mae Rim",
+    "Doi Suthep",
+    "Mon Jam",
+    "Elephant sanctuary areas",
+  ],
+  ChiangRai: [
+    "Chiang Rai Town",
+    "White Temple area",
+    "Blue Temple area",
+    "Golden Triangle",
+    "Mae Salong",
+    "Phu Chi Fa",
+  ],
+  "Chiang Rai": [
+    "Chiang Rai Town",
+    "White Temple area",
+    "Blue Temple area",
+    "Golden Triangle",
+    "Mae Salong",
+    "Phu Chi Fa",
+  ],
+  Chonburi: [
+    "Pattaya",
+    "Jomtien",
+    "Naklua",
+    "Bangsaen",
+    "Koh Larn",
+    "Sriracha",
+  ],
+  PrachuapKhiriKhan: [
+    "Hua Hin",
+    "Khao Takiab",
+    "Pranburi",
+    "Sam Roi Yot",
+    "Kui Buri",
+  ],
+  "Prachuap Khiri Khan": [
+    "Hua Hin",
+    "Khao Takiab",
+    "Pranburi",
+    "Sam Roi Yot",
+    "Kui Buri",
+  ],
+  Kanchanaburi: [
+    "River Kwai",
+    "Kanchanaburi Town",
+    "Erawan National Park",
+    "Sai Yok",
+    "Sangkhlaburi",
+  ],
+  Loei: [
+    "Chiang Khan",
+    "Phu Ruea",
+    "Phu Kradueng",
+    "ภูเรือ",
+    "ภูกระดึง",
+  ],
+  Nan: ["Nan Town", "Bo Kluea", "Pua", "Doi Samer Dao"],
+  MaeHongSon: ["Pai", "Mae Hong Son Town", "Ban Rak Thai", "Pang Ung"],
+  "Mae Hong Son": ["Pai", "Mae Hong Son Town", "Ban Rak Thai", "Pang Ung"],
+  Trat: ["Koh Chang", "Koh Kood", "Koh Mak", "Trat Town"],
+  Ranong: ["Koh Phayam", "Ranong Town", "Hot springs", "Mangrove areas"],
+  Trang: ["Koh Mook", "Koh Kradan", "Koh Libong", "Trang Town"],
+  Satun: ["Koh Lipe", "Tarutao", "Pak Bara", "La-ngu"],
+  Songkhla: ["Hat Yai", "Songkhla Old Town", "Samila Beach", "Koh Yo"],
+  Rayong: ["Koh Samet", "Mae Ramphueng", "Rayong City", "Ban Phe"],
+  Phetchabun: ["Khao Kho", "Phu Thap Boek", "Wat Pha Sorn Kaew"],
+  NakhonRatchasima: [
+    "Khao Yai",
+    "Pak Chong",
+    "Wang Nam Khiao",
+    "Korat City",
+  ],
+  "Nakhon Ratchasima": [
+    "Khao Yai",
+    "Pak Chong",
+    "Wang Nam Khiao",
+    "Korat City",
+  ],
+  UdonThani: ["Red Lotus Lake", "Udon City", "Ban Chiang"],
+  "Udon Thani": ["Red Lotus Lake", "Udon City", "Ban Chiang"],
+  Ayutthaya: [
+    "Ayutthaya Historical Park",
+    "Riverside",
+    "Old City",
+    "Night market area",
+  ],
+  "Phra Nakhon Si Ayutthaya": [
+    "Ayutthaya Historical Park",
+    "Riverside",
+    "Old City",
+    "Night market area",
+  ],
+};
+
+function getProvinceHighlights(province: string) {
+  if (!province) return [];
+
+  const raw = province.trim();
+  const compact = raw.replace(/\s+/g, "");
+
+  return (
+    PROVINCE_HIGHLIGHTS[raw] ||
+    PROVINCE_HIGHLIGHTS[compact] ||
+    []
+  );
+}
+
 export async function POST(req: Request) {
   try {
     // ===== CHECK LIMIT =====
@@ -176,6 +363,12 @@ export async function POST(req: Request) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    const provinceHighlights = getProvinceHighlights(province);
+    const provinceHintsText =
+      provinceHighlights.length > 0
+        ? provinceHighlights.join(", ")
+        : "Use the province's best-known beaches, islands, mountains, waterfalls, old town areas, and city areas when relevant.";
+
     const prompt = `
 You are a Thailand travel DECISION ENGINE.
 
@@ -185,6 +378,9 @@ Your job is to HELP THE USER DECIDE FAST.
 User context:
 - Location: ${province}
 - Language: ${language}
+
+KNOWN MAJOR AREAS / ATTRACTIONS FOR THIS PROVINCE:
+${provinceHintsText}
 
 PRODUCT GOAL:
 - Reduce confusion
@@ -202,6 +398,17 @@ STRICT RULES:
 - NO extra commentary outside JSON
 - Sound practical, confident, and human
 - Keep every field short and easy to scan
+
+DECISION RULES:
+- Use REAL stay areas, islands, beach zones, mountain zones, old town zones, or famous travel bases inside that province
+- If the province has famous islands, beaches, waterfalls, mountain areas, or well-known tourist zones, you MUST consider them
+- Do NOT default only to city center unless city center is truly one of the strongest options
+- For provinces with famous islands, include those islands when relevant
+- For provinces with famous beach zones, include those beach zones when relevant
+- For provinces with famous mountain or nature zones, include those nature zones when relevant
+- Prefer options that travelers would realistically choose as a base to stay
+- Each option must feel clearly different
+- The finalRecommendation must match the strongest option in the list
 
 Return ONLY valid JSON in this exact shape:
 
@@ -231,8 +438,6 @@ REQUIREMENTS:
 - finalRecommendation must be decisive and personal
 - Avoid weak wording like "it depends" or "you could also"
 - Do not sound like a blog or travel article
-- Each option should feel clearly different from the others
-- The finalRecommendation should match the strongest option in the list
 
 IMPORTANT BOUNDARY:
 - Only help with travel decisions
@@ -249,7 +454,7 @@ ${question}
         {
           role: "system",
           content:
-            "You are a strict decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like.",
+            "You are a strict Thailand travel decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like. Use real famous stay areas and tourist zones for each province when relevant.",
         },
         { role: "user", content: prompt },
       ],
