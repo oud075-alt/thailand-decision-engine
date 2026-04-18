@@ -140,7 +140,7 @@ export default function Home() {
 
             <div style={styles.aboutImageWrap}>
               <img
-                src="/images/about-thai-man.jpg"  
+                src="/Images/about-thai-man.jpg"  
                 alt="Thai local expert"
                 style={styles.aboutImage}
               />
@@ -222,7 +222,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     textAlign: "center",
     overflow: "hidden",
-    backgroundImage: "url('/images/thai-hero.jpg')",
+    backgroundImage: "url('/Images/thai-hero.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
   },
