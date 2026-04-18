@@ -38,10 +38,11 @@ export default function Home() {
           <h1
             style={{
               ...styles.heroTitle,
-              fontSize: isMobile ? 36 : 68,
-              lineHeight: isMobile ? 1.1 : 1.05,
-              maxWidth: isMobile ? 320 : 980,
+              fontSize: isMobile ? 30 : 68,
+              lineHeight: isMobile ? 1.25 : 1.05,
+              maxWidth: isMobile ? 340 : 980,
               margin: "0 auto",
+              padding: isMobile ? "0 16px" : "0",
             }}
           >
             Welcome to Thailand
