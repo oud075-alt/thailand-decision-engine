@@ -94,12 +94,18 @@ function extractJson(text: string): string {
 
 function sanitizeDecisionResult(data: any): DecisionResult {
   const options = Array.isArray(data?.options)
-    ? data.options.slice(0, 3).map((item: any) => ({
-        option: String(item?.option || "").trim(),
-        vibe: String(item?.vibe || "").trim(),
-        bestFor: String(item?.bestFor || "").trim(),
-        whyItFits: String(item?.whyItFits || "").trim(),
-      }))
+    ? data.options
+        .slice(0, 3)
+        .map((item: any) => ({
+          option: String(item?.option || "").trim(),
+          vibe: String(item?.vibe || "").trim(),
+          bestFor: String(item?.bestFor || "").trim(),
+          whyItFits: String(item?.whyItFits || "").trim(),
+        }))
+        .filter(
+          (item: DecisionOption) =>
+            item.option || item.vibe || item.bestFor || item.whyItFits
+        )
     : [];
 
   const quickGuide = Array.isArray(data?.quickGuide)
@@ -166,15 +172,6 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Surat Thani City",
     "Khao Sok access",
   ],
-  PhangNga: [
-    "Khao Lak",
-    "Koh Yao Yai",
-    "Koh Yao Noi",
-    "Phang Nga Bay",
-    "Similan Islands access",
-    "Surin Islands access",
-    "Samet Nangshe",
-  ],
   "Phang Nga": [
     "Khao Lak",
     "Koh Yao Yai",
@@ -184,14 +181,14 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Surin Islands access",
     "Samet Nangshe",
   ],
-  ChiangMai: [
-    "Old City",
-    "Nimman",
-    "Riverside",
-    "Mae Rim",
-    "Doi Suthep",
-    "Mon Jam",
-    "Elephant sanctuary areas",
+  PhangNga: [
+    "Khao Lak",
+    "Koh Yao Yai",
+    "Koh Yao Noi",
+    "Phang Nga Bay",
+    "Similan Islands access",
+    "Surin Islands access",
+    "Samet Nangshe",
   ],
   "Chiang Mai": [
     "Old City",
@@ -202,7 +199,16 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Mon Jam",
     "Elephant sanctuary areas",
   ],
-  ChiangRai: [
+  ChiangMai: [
+    "Old City",
+    "Nimman",
+    "Riverside",
+    "Mae Rim",
+    "Doi Suthep",
+    "Mon Jam",
+    "Elephant sanctuary areas",
+  ],
+  "Chiang Rai": [
     "Chiang Rai Town",
     "White Temple area",
     "Blue Temple area",
@@ -210,7 +216,7 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Mae Salong",
     "Phu Chi Fa",
   ],
-  "Chiang Rai": [
+  ChiangRai: [
     "Chiang Rai Town",
     "White Temple area",
     "Blue Temple area",
@@ -226,14 +232,14 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Koh Larn",
     "Sriracha",
   ],
-  PrachuapKhiriKhan: [
+  "Prachuap Khiri Khan": [
     "Hua Hin",
     "Khao Takiab",
     "Pranburi",
     "Sam Roi Yot",
     "Kui Buri",
   ],
-  "Prachuap Khiri Khan": [
+  PrachuapKhiriKhan: [
     "Hua Hin",
     "Khao Takiab",
     "Pranburi",
@@ -247,16 +253,10 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
     "Sai Yok",
     "Sangkhlaburi",
   ],
-  Loei: [
-    "Chiang Khan",
-    "Phu Ruea",
-    "Phu Kradueng",
-    "ภูเรือ",
-    "ภูกระดึง",
-  ],
+  Loei: ["Chiang Khan", "Phu Ruea", "Phu Kradueng", "ภูเรือ", "ภูกระดึง"],
   Nan: ["Nan Town", "Bo Kluea", "Pua", "Doi Samer Dao"],
-  MaeHongSon: ["Pai", "Mae Hong Son Town", "Ban Rak Thai", "Pang Ung"],
   "Mae Hong Son": ["Pai", "Mae Hong Son Town", "Ban Rak Thai", "Pang Ung"],
+  MaeHongSon: ["Pai", "Mae Hong Son Town", "Ban Rak Thai", "Pang Ung"],
   Trat: ["Koh Chang", "Koh Kood", "Koh Mak", "Trat Town"],
   Ranong: ["Koh Phayam", "Ranong Town", "Hot springs", "Mangrove areas"],
   Trang: ["Koh Mook", "Koh Kradan", "Koh Libong", "Trang Town"],
@@ -264,20 +264,20 @@ const PROVINCE_HIGHLIGHTS: Record<string, string[]> = {
   Songkhla: ["Hat Yai", "Songkhla Old Town", "Samila Beach", "Koh Yo"],
   Rayong: ["Koh Samet", "Mae Ramphueng", "Rayong City", "Ban Phe"],
   Phetchabun: ["Khao Kho", "Phu Thap Boek", "Wat Pha Sorn Kaew"],
-  NakhonRatchasima: [
-    "Khao Yai",
-    "Pak Chong",
-    "Wang Nam Khiao",
-    "Korat City",
-  ],
   "Nakhon Ratchasima": [
     "Khao Yai",
     "Pak Chong",
     "Wang Nam Khiao",
     "Korat City",
   ],
-  UdonThani: ["Red Lotus Lake", "Udon City", "Ban Chiang"],
+  NakhonRatchasima: [
+    "Khao Yai",
+    "Pak Chong",
+    "Wang Nam Khiao",
+    "Korat City",
+  ],
   "Udon Thani": ["Red Lotus Lake", "Udon City", "Ban Chiang"],
+  UdonThani: ["Red Lotus Lake", "Udon City", "Ban Chiang"],
   Ayutthaya: [
     "Ayutthaya Historical Park",
     "Riverside",
@@ -301,9 +301,48 @@ function getProvinceHighlights(province: string) {
   return PROVINCE_HIGHLIGHTS[raw] || PROVINCE_HIGHLIGHTS[compact] || [];
 }
 
+function getFallbackResult(province: string, question: string): DecisionResult {
+  const highlights = getProvinceHighlights(province);
+  const first = highlights[0] || province;
+  const second = highlights[1] || `${province} Town`;
+  const third = highlights[2] || "main travel area";
+
+  return {
+    intro: `Here is the clearest way to narrow down your stay in ${province}.`,
+    options: [
+      {
+        option: first,
+        vibe: "most balanced",
+        bestFor: "easy first choice",
+        whyItFits: "Good starting point if you want convenience and fewer mistakes.",
+      },
+      {
+        option: second,
+        vibe: "slower and simpler",
+        bestFor: "lighter plans",
+        whyItFits: "Better if you want less movement and a calmer base.",
+      },
+      {
+        option: third,
+        vibe: "more specific",
+        bestFor: "travelers with a stronger preference",
+        whyItFits: "Useful if your trip is built around one activity or one mood.",
+      },
+    ],
+    quickGuide: [
+      `If you want the safest choice → ${first}`,
+      `If you want calmer pace → ${second}`,
+      `If you want something more specific → ${third}`,
+    ],
+    finalRecommendation: `Best choice for YOU → ${first}`,
+    optionalContext: question
+      ? "Your preference was included, but the model response was unstable, so a safe fallback was returned."
+      : "",
+  };
+}
+
 export async function POST(req: Request) {
   try {
-    // ===== CHECK LIMIT =====
     const forwardedFor = req.headers.get("x-forwarded-for") || "unknown";
     const ip = forwardedFor.split(",")[0].trim();
 
@@ -321,12 +360,16 @@ export async function POST(req: Request) {
         { status: 429 }
       );
     }
-    // ======================
 
     const body = await req.json();
-    const { question, language, province } = body;
+    const question =
+      typeof body?.question === "string" ? body.question.trim() : "";
+    const language =
+      typeof body?.language === "string" ? body.language.trim() : "English";
+    const province =
+      typeof body?.province === "string" ? body.province.trim() : "Thailand";
 
-    if (!question || typeof question !== "string") {
+    if (!question) {
       return Response.json(
         {
           result: {
@@ -341,7 +384,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ===== BLOCK RESTRICTED =====
     if (isRestrictedQuestion(question)) {
       return Response.json({
         result: {
@@ -353,7 +395,21 @@ export async function POST(req: Request) {
         },
       });
     }
-    // ======================
+
+    if (!process.env.OPENAI_API_KEY) {
+      return Response.json(
+        {
+          result: {
+            intro: "The AI connection is not configured yet.",
+            options: [],
+            quickGuide: [],
+            finalRecommendation: "",
+            optionalContext: "Missing OPENAI_API_KEY",
+          },
+        },
+        { status: 500 }
+      );
+    }
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -366,58 +422,37 @@ export async function POST(req: Request) {
         : "Use the province's best-known beaches, islands, mountains, waterfalls, old town areas, and city areas when relevant.";
 
     const prompt = `
-You are a Thailand travel DECISION ENGINE.
+You are a Thailand travel decision engine.
 
-Your job is NOT to explain.
-Your job is to HELP THE USER DECIDE FAST.
+Your only job is to help the user decide where to stay fast.
 
 User context:
-- Location: ${province}
+- Province: ${province}
 - Language: ${language}
-- User specific preference: included inside the question, must be considered strongly
 
-KNOWN MAJOR AREAS / ATTRACTIONS FOR THIS PROVINCE:
+Known major areas in this province:
 ${provinceHintsText}
 
-PRODUCT GOAL:
-- Reduce confusion
-- Narrow choices
-- Make the user feel they can stop thinking now
+Rules:
+- Return ONLY valid JSON
+- No markdown
+- No explanation outside JSON
+- Give 2 or 3 clearly different options
+- Use real famous areas when possible
+- Push toward one strongest recommendation
+- Keep every field short, practical, and easy to scan
+- Only answer travel decision questions
+- Do not answer about law, visa, immigration, insurance, customs, entry rules, or legal issues
 
-STRICT RULES:
-- ALWAYS give only 2 or 3 options
-- ALWAYS compare options
-- ALWAYS push toward one strongest match
-- NO long explanations
-- NO generic travel guide tone
-- NO markdown table
-- NO numbered list
-- NO extra commentary outside JSON
-- Sound practical, confident, and human
-- Keep every field short and easy to scan
-
-DECISION RULES:
-- Use REAL stay areas, islands, beach zones, mountain zones, old town zones, or famous travel bases inside that province
-- If the user gives a specific preference, prioritize it over generic recommendations
-- If the province has famous islands, beaches, waterfalls, mountain areas, or well-known tourist zones, you MUST consider them
-- Do NOT default only to city center unless city center is truly one of the strongest options
-- For provinces with famous islands, include those islands when relevant
-- For provinces with famous beach zones, include those beach zones when relevant
-- For provinces with famous mountain or nature zones, include those nature zones when relevant
-- Prefer options that travelers would realistically choose as a base to stay
-- Each option must feel clearly different
-- The finalRecommendation must match the strongest option in the list
-
-Return ONLY valid JSON in this exact shape:
-
+JSON shape:
 {
   "intro": "short human intro",
   "options": [
     {
-      "option": "area or choice name",
+      "option": "area name",
       "vibe": "short vibe",
       "bestFor": "who it fits",
-      "whyItFits": "why it fits"
+      "whyItFits": "short reason"
     }
   ],
   "quickGuide": [
@@ -428,40 +463,36 @@ Return ONLY valid JSON in this exact shape:
   "optionalContext": "short extra context"
 }
 
-REQUIREMENTS:
-- options must contain 2 or 3 items
-- quickGuide should contain 2 or 3 short lines
-- intro must be short, direct, and calming
-- optionalContext must be short
-- finalRecommendation must be decisive and personal
-- Avoid weak wording like "it depends" or "you could also"
-- Do not sound like a blog or travel article
-
-IMPORTANT BOUNDARY:
-- Only help with travel decisions
-- Do NOT answer about laws, visas, immigration, insurance, customs, or legal requirements
-- If question is about those, return JSON with the refusal in "intro" and leave other fields empty
-
 User question:
 ${question}
 `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
           content:
-            "You are a strict Thailand travel decision engine. Return only valid JSON with the exact required keys. Be decisive, concise, and product-like. Use real famous stay areas and tourist zones for each province when relevant. If the user adds a specific preference, treat it as a strong signal.",
+            "You are a strict Thailand travel decision engine. Return only valid JSON with exactly these keys: intro, options, quickGuide, finalRecommendation, optionalContext.",
         },
-        { role: "user", content: prompt },
+        {
+          role: "user",
+          content: prompt,
+        },
       ],
       temperature: 0.3,
     });
 
-    const raw = completion.choices[0].message.content || "";
+    const raw = completion.choices[0]?.message?.content || "{}";
     const parsed = JSON.parse(extractJson(raw));
     const result = sanitizeDecisionResult(parsed);
+
+    if (!result.intro && result.options.length === 0) {
+      return Response.json({
+        result: getFallbackResult(province, question),
+      });
+    }
 
     return Response.json({
       result,
@@ -469,11 +500,8 @@ ${question}
   } catch (error: any) {
     console.error("ASK_ERROR:", error);
 
-    return Response.json(
-      {
-        error: error?.message || "Unknown error",
-      },
-      { status: 500 }
-    );
+    return Response.json({
+      result: getFallbackResult("Thailand", ""),
+    });
   }
 }

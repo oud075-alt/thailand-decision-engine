@@ -1,617 +1,443 @@
 "use client";
 
-import { useState } from "react";
-
-type DecisionOption = {
-  option: string;
-  vibe: string;
-  bestFor: string;
-  whyItFits: string;
-};
-
-type DecisionResult = {
-  intro: string;
-  options: DecisionOption[];
-  quickGuide: string[];
-  finalRecommendation: string;
-  optionalContext: string;
-};
-
-function extractPlace(text: string) {
-  if (!text) return "";
-  const parts = text.split("→");
-  return parts.length > 1 ? parts[1].trim() : text.trim();
-}
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const provinces = [
-    "Bangkok",
-    "Amnat Charoen",
-    "Ang Thong",
-    "Bueng Kan",
-    "Buriram",
-    "Chachoengsao",
-    "Chai Nat",
-    "Chaiyaphum",
-    "Chanthaburi",
-    "Chiang Mai",
-    "Chiang Rai",
-    "Chonburi",
-    "Chumphon",
-    "Kalasin",
-    "Kamphaeng Phet",
-    "Kanchanaburi",
-    "Khon Kaen",
-    "Krabi",
-    "Lampang",
-    "Lamphun",
-    "Loei",
-    "Lopburi",
-    "Mae Hong Son",
-    "Maha Sarakham",
-    "Mukdahan",
-    "Nakhon Nayok",
-    "Nakhon Pathom",
-    "Nakhon Phanom",
-    "Nakhon Ratchasima",
-    "Nakhon Sawan",
-    "Nakhon Si Thammarat",
-    "Nan",
-    "Narathiwat",
-    "Nong Bua Lamphu",
-    "Nong Khai",
-    "Nonthaburi",
-    "Pathum Thani",
-    "Pattani",
-    "Phang Nga",
-    "Phatthalung",
-    "Phayao",
-    "Phetchabun",
-    "Phetchaburi",
-    "Phichit",
-    "Phitsanulok",
-    "Phra Nakhon Si Ayutthaya",
-    "Phrae",
-    "Phuket",
-    "Prachinburi",
-    "Prachuap Khiri Khan",
-    "Ranong",
-    "Ratchaburi",
-    "Rayong",
-    "Roi Et",
-    "Sa Kaeo",
-    "Sakon Nakhon",
-    "Samut Prakan",
-    "Samut Sakhon",
-    "Samut Songkhram",
-    "Saraburi",
-    "Satun",
-    "Sing Buri",
-    "Sisaket",
-    "Songkhla",
-    "Sukhothai",
-    "Suphan Buri",
-    "Surat Thani",
-    "Surin",
-    "Tak",
-    "Trang",
-    "Trat",
-    "Ubon Ratchathani",
-    "Udon Thani",
-    "Uthai Thani",
-    "Uttaradit",
-    "Yala",
-    "Yasothon",
-  ];
-
-  const [province, setProvince] = useState("Krabi");
-  const [days, setDays] = useState("1-3 days");
-  const [travelType, setTravelType] = useState("friends");
-  const [budget, setBudget] = useState("mid");
-  const [style, setStyle] = useState("explore");
-  const [extraPreference, setExtraPreference] = useState("");
-  const [concern, setConcern] = useState("wrong location");
-  const [result, setResult] = useState<DecisionResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    setResult(null);
-    setCopied(false);
-
-    const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}. Extra preference: ${extraPreference}`;
-
-    try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question,
-          province,
-          language: "English",
-        }),
-      });
-
-      const data = await res.json();
-      setResult(data.result || null);
-    } catch (err) {
-      setResult({
-        intro: "Something went wrong.",
-        options: [],
-        quickGuide: [],
-        finalRecommendation: "",
-        optionalContext: "",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleShare = async () => {
-    const shareData = {
-      title: "Thailand Decision Engine",
-      text: result
-        ? `I used this Thailand travel tool and got a useful stay suggestion for ${province}.`
-        : "Not sure where to stay in Thailand? Try this decision tool.",
-      url: "https://thailand-decision-engine-z3xj.vercel.app/",
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        return;
-      }
-
-      await navigator.clipboard.writeText(shareData.url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Share failed:", error);
-    }
-  };
+  const router = useRouter();
 
   return (
     <main style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Thailand Decision Engine</h1>
-        <p style={styles.subtitle}>
-          Get clear travel decisions in seconds. No confusion.
-        </p>
-      </div>
+      <section style={styles.hero}>
+        <div style={styles.heroOverlay} />
+        <div style={styles.heroInner}>
+          <h1 style={styles.heroTitle}>Welcome to Thailand</h1>
 
-      <div style={styles.card}>
-        <div style={styles.grid}>
-          <Select
-            label="Province"
-            value={province}
-            setValue={setProvince}
-            options={provinces}
-          />
-          <Select
-            label="Days"
-            value={days}
-            setValue={setDays}
-            options={["1-3 days", "4-7 days", "7+ days"]}
-          />
-          <Select
-            label="Travel type"
-            value={travelType}
-            setValue={setTravelType}
-            options={["solo", "couple", "friends", "family"]}
-          />
-          <Select
-            label="Budget"
-            value={budget}
-            setValue={setBudget}
-            options={["budget", "mid", "luxury"]}
-          />
-          <Select
-            label="Style"
-            value={style}
-            setValue={setStyle}
-            options={["relax", "explore", "party"]}
-          />
+          <p style={styles.heroSubtitle}>
+            Discover the beauty, culture, and unforgettable experiences of
+            Thailand.
+          </p>
 
-          <div>
-            <div style={styles.label}>What do you want most?</div>
-            <input
-              value={extraPreference}
-              onChange={(e) => setExtraPreference(e.target.value)}
-              placeholder="e.g. quiet beach, nightlife but not too crazy, near airport, snorkeling"
-              style={styles.input}
-            />
-          </div>
-
-          <Select
-            label="Main concern"
-            value={concern}
-            setValue={setConcern}
-            options={["wrong location", "wasted time", "overpaying"]}
-          />
-        </div>
-
-        <button style={styles.button} onClick={handleSubmit}>
-          {loading ? "Thinking..." : "Get Decision"}
-        </button>
-
-        <div style={styles.shareHintWrap}>
-          <div style={styles.shareHintText}>
-            Know someone planning a Thailand trip? Share this tool.
-          </div>
-
-          <button style={styles.shareButtonSecondary} onClick={handleShare}>
-            {copied ? "Link copied!" : "Share this tool"}
+          <button
+            style={styles.heroButton}
+            onClick={() => router.push("/tool")}
+          >
+            START DECISION
           </button>
         </div>
-      </div>
+      </section>
 
-      {result && (
-        <div style={styles.resultBox}>
-          <StructuredResult result={result} province={province} />
+      <section style={styles.section}>
+        <div style={styles.container}>
+          <h2 style={styles.sectionTitle}>How It Works</h2>
 
-          <div style={styles.resultShareWrap}>
-            <div style={styles.resultShareText}>
-              Traveling with others? Send this result before booking.
-            </div>
-
-            <button style={styles.shareButtonPrimary} onClick={handleShare}>
-              {copied ? "Link copied!" : "Share this result"}
-            </button>
+          <div style={styles.cardRow}>
+            <InfoCard
+              icon="✓"
+              iconBg="#4da3ff"
+              title="Answer Questions"
+              text="Tell us your preferences, like budget and activities"
+            />
+            <InfoCard
+              icon="◎"
+              iconBg="#f59b4a"
+              title="Get Recommendation"
+              text="See the best destinations and hotels for you"
+            />
+            <InfoCard
+              icon="↪"
+              iconBg="#67b86a"
+              title="Book Instantly"
+              text="Click to book your ideal stay through Agoda"
+            />
           </div>
         </div>
-      )}
+      </section>
+
+      <section style={styles.sectionAlt}>
+        <div style={styles.container}>
+          <h2 style={styles.sectionTitle}>Who Is This For?</h2>
+
+          <div style={styles.photoCardRow}>
+            <AudienceCard
+              image="https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=900&q=80"
+              icon="✓"
+              iconBg="#2f80ed"
+              title="First-time Travelers"
+              text="Better quiet or stay near the action? Get clear direction fast."
+            />
+            <AudienceCard
+              image="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=900&q=80"
+              icon="◉"
+              iconBg="#f2994a"
+              title="Families"
+              text="Find places that feel easier, cleaner, and more comfortable."
+            />
+            <AudienceCard
+              image="https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=900&q=80"
+              icon="▶"
+              iconBg="#6fcf97"
+              title="Couples"
+              text="Choose areas with Thai charm, culture, and memorable atmosphere."
+            />
+          </div>
+        </div>
+      </section>
+
+      <section style={styles.section}>
+        <div style={styles.container}>
+          <h2 style={styles.sectionTitle}>Why Use Thailand Decision Engine?</h2>
+
+          <div style={styles.cardRow}>
+            <InfoCard
+              icon="⌚"
+              iconBg="#56a8ff"
+              title="Save Time"
+              text="Find the perfect spot in seconds, not hours of research"
+            />
+            <InfoCard
+              icon="➜"
+              iconBg="#f2994a"
+              title="Reduce Confusion"
+              text="No more endless searching — get a clear recommendation"
+            />
+            <InfoCard
+              icon="👍"
+              iconBg="#6fcf97"
+              title="Avoid Bad Choices"
+              text="Discover places that match your style, budget, and needs"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section style={styles.aboutSection}>
+        <div style={styles.container}>
+          <div style={styles.aboutBox}>
+            <div style={styles.aboutContent}>
+              <h2 style={styles.aboutTitle}>About Thailand Decision Engine</h2>
+
+              <p style={styles.aboutText}>
+  About Thailand Decision Engine
+
+  {"\n\n"}I live in Thailand and work around tourist areas every day.
+
+  {"\n\n"}I see the same problem again and again:
+  {"\n"}Travelers don’t struggle because Thailand is bad —
+  {"\n"}they struggle because there are too many choices.
+
+  {"\n\n"}Phuket, Krabi, Bangkok, Chiang Mai…
+  {"\n"}Every place looks good, but not every place fits you.
+
+  {"\n\n"}That’s why I built this tool.
+
+  {"\n\n"}Instead of guessing, just answer a few simple questions —
+  {"\n"}and instantly get a clear, personalized place to stay.
+
+  {"\n\n"}Stop wasting time comparing.
+  {"\n"}Start with a place that actually fits you.
+</p>
+            </div>
+
+            <div style={styles.aboutImageWrap}>
+              <img
+                src="/images/about-thai-man.jpg"  
+                alt="Thai local expert"
+                style={styles.aboutImage}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
 
-function Select({ label, value, setValue, options }: any) {
-  return (
-    <div>
-      <div style={styles.label}>{label}</div>
-      <select
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        style={styles.select}
-      >
-        {options.map((o: string) => (
-          <option key={o}>{o}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function StructuredResult({
-  result,
-  province,
+function InfoCard({
+  icon,
+  iconBg,
+  title,
+  text,
 }: {
-  result: DecisionResult;
-  province: string;
+  icon: string;
+  iconBg: string;
+  title: string;
+  text: string;
 }) {
-  const bestMatch = extractPlace(result.finalRecommendation);
-
   return (
-    <div>
-      <h2 style={styles.resultTitle}>
-        Choose the best area for your stay in {province}.
-      </h2>
-
-      {bestMatch && (
-        <div style={styles.bestMatchBox}>
-          <span style={styles.bestMatchIcon}>✔</span>
-          <span>
-            <strong>Your best match:</strong> {bestMatch}
-          </span>
-        </div>
-      )}
-
-      {result.intro && <div style={styles.text}>{result.intro}</div>}
-
-      {result.options?.length > 0 && (
-        <>
-          <div style={styles.sectionTitle}>Best options</div>
-          <div style={styles.cardGrid}>
-            {result.options.map((item, index) => (
-              <div key={index} style={styles.optionCard}>
-                <div style={styles.optionTitle}>{item.option}</div>
-                <div style={styles.optionMeta}>
-                  <strong>Vibe:</strong> {item.vibe}
-                </div>
-                <div style={styles.optionMeta}>
-                  <strong>Best for:</strong> {item.bestFor}
-                </div>
-                <div style={styles.optionMeta}>
-                  <strong>Why it fits:</strong> {item.whyItFits}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {result.quickGuide?.length > 0 && (
-        <>
-          <div style={styles.sectionTitle}>How to choose</div>
-          <div style={styles.guideBox}>
-            {result.quickGuide.map((item, index) => (
-              <div key={index} style={styles.guideItem}>
-                {item}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {result.optionalContext && (
-        <div style={styles.context}>{result.optionalContext}</div>
-      )}
-
-      {bestMatch && (
-        <div style={styles.nextStepBox}>
-          <div style={styles.nextStepTitle}>Next step</div>
-          <div style={styles.nextStepItem}>- Search hotels in {bestMatch}</div>
-          <div style={styles.nextStepItem}>
-            - Focus on areas close to main attractions
-          </div>
-        </div>
-      )}
+    <div style={styles.infoCard}>
+      <div style={styles.infoCardHeader}>
+        <div style={{ ...styles.infoIcon, background: iconBg }}>{icon}</div>
+        <h3 style={styles.infoTitle}>{title}</h3>
+      </div>
+      <p style={styles.infoText}>{text}</p>
     </div>
   );
 }
 
-const styles: any = {
+function AudienceCard({
+  image,
+  icon,
+  iconBg,
+  title,
+  text,
+}: {
+  image: string;
+  icon: string;
+  iconBg: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div style={styles.audienceCard}>
+      <img src={image} alt={title} style={styles.audienceImage} />
+      <div style={styles.audienceBody}>
+        <div style={styles.audienceTitleRow}>
+          <div style={{ ...styles.infoIcon, background: iconBg }}>{icon}</div>
+          <h3 style={styles.audienceTitle}>{title}</h3>
+        </div>
+        <p style={styles.audienceText}>{text}</p>
+      </div>
+    </div>
+  );
+}
+
+const styles: Record<string, React.CSSProperties> = {
   page: {
-    maxWidth: 720,
-    margin: "40px auto",
-    padding: 20,
-    fontFamily: "system-ui",
+    background: "#f3f3f3",
+    minHeight: "100vh",
+    fontFamily: "system-ui, sans-serif",
   },
 
-  header: {
-    marginBottom: 20,
+  container: {
+    maxWidth: 1180,
+    margin: "0 auto",
+    padding: "0 24px",
   },
 
-  title: {
-    fontSize: 32,
-    fontWeight: 700,
-  },
-
-  subtitle: {
-    color: "#666",
-  },
-
-  card: {
-    background: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    border: "1px solid #eee",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    marginBottom: 20,
-  },
-
-  grid: {
-    display: "grid",
-    gap: 12,
-    marginBottom: 16,
-  },
-
-  label: {
-    fontSize: 13,
-    marginBottom: 4,
-    color: "#666",
-  },
-
-  select: {
-    width: "100%",
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #ddd",
-  },
-
-  input: {
-    width: "100%",
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #ddd",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-
-  button: {
-    width: "100%",
-    padding: 14,
-    background: "#111",
-    color: "#fff",
-    borderRadius: 10,
-    border: "none",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-
-  shareHintWrap: {
-    marginTop: 12,
-    textAlign: "center",
-  },
-
-  shareHintText: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 8,
-  },
-
-  shareButtonSecondary: {
-    width: "100%",
-    padding: 12,
-    background: "#fff",
-    color: "#111",
-    borderRadius: 10,
-    border: "1px solid #ddd",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-
-  resultBox: {
-    background: "#fafafa",
-    border: "1px solid #eee",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: 700,
-    marginBottom: 16,
-  },
-
-  bestMatchBox: {
+  hero: {
+    position: "relative",
+    minHeight: "560px",
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    background: "#111",
-    color: "#fff",
-    padding: "14px 16px",
-    borderRadius: 10,
-    marginBottom: 16,
+    justifyContent: "center",
+    textAlign: "center",
+    overflow: "hidden",
+    backgroundImage: "url('/images/thai-hero.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
   },
 
-  bestMatchIcon: {
-    fontSize: 16,
-    lineHeight: 1,
+  heroOverlay: {
+    position: "absolute",
+    inset: 0,
+    background: `
+      linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.25) 0%,
+        rgba(0,0,0,0.45) 60%,
+        rgba(0,0,0,0.65) 100%
+      )
+    `,
   },
 
-  text: {
-    marginBottom: 8,
+  heroInner: {
+    position: "relative",
+    zIndex: 1,
+    maxWidth: 980,
+    padding: "40px 24px",
+  },
+
+  heroTitle: {
+    margin: 0,
+    fontSize: "68px",
+    lineHeight: 1.05,
+    fontWeight: 900,
+    color: "#ffffff",
+    letterSpacing: "-1px",
+    textShadow: "0 4px 20px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4)",
+  },
+
+  heroSubtitle: {
+    margin: "22px auto 0",
+    fontSize: "22px",
+    color: "rgba(255,255,255,0.9)",
+    maxWidth: "720px",
     lineHeight: 1.6,
   },
 
+  heroButton: {
+    marginTop: "36px",
+    padding: "18px 44px",
+    fontSize: "18px",
+    fontWeight: 800,
+    background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+    color: "white",
+    border: "none",
+    borderRadius: "14px",
+    cursor: "pointer",
+    boxShadow: "0 12px 30px rgba(37, 99, 235, 0.4)",
+  },
+
   section: {
-    marginTop: 16,
-    marginBottom: 6,
-    fontWeight: 700,
-  },
-
-  tableRow: {
-    fontFamily: "monospace",
-    background: "#fff",
-    padding: 6,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-
-  recommend: {
-    marginTop: 16,
-    padding: 12,
-    background: "#111",
-    color: "#fff",
-    borderRadius: 10,
-    fontWeight: 600,
-  },
-
-  sectionTitle: {
-    marginTop: 20,
-    marginBottom: 10,
-    fontWeight: 700,
-    fontSize: 16,
-  },
-
-  cardGrid: {
-    display: "grid",
-    gap: 10,
-  },
-
-  optionCard: {
-    background: "#fff",
-    border: "1px solid #eee",
-    borderRadius: 10,
-    padding: 12,
-  },
-
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: 700,
-    marginBottom: 8,
-  },
-
-  optionMeta: {
-    marginBottom: 6,
-    lineHeight: 1.5,
-    color: "#333",
-  },
-
-  guideBox: {
-    background: "#f9f9f9",
-    padding: 12,
-    borderRadius: 10,
-  },
-
-  guideItem: {
-    marginBottom: 6,
-  },
-
-  recommendWrap: {
-    marginTop: 16,
-  },
-
-  recommendLabel: {
-    marginBottom: 8,
-    fontWeight: 700,
-    fontSize: 14,
-    color: "#333",
-  },
-
-  recommendBox: {
-    padding: 14,
-    background: "#111",
-    color: "#fff",
-    borderRadius: 10,
-    fontWeight: 600,
-  },
-
-  context: {
-    marginTop: 12,
-    color: "#666",
-  },
-
-  nextStepBox: {
-    marginTop: 18,
-    padding: 12,
-    borderRadius: 10,
+    padding: "56px 0",
     background: "#f3f3f3",
   },
 
-  nextStepTitle: {
-    fontWeight: 700,
-    marginBottom: 8,
+  sectionAlt: {
+    padding: "36px 0 56px",
+    background: "#f0f0f0",
   },
 
-  nextStepItem: {
-    marginBottom: 4,
-    color: "#333",
+  sectionTitle: {
+    margin: "0 0 34px",
+    textAlign: "center",
+    fontSize: "40px",
+    lineHeight: 1.15,
+    fontWeight: 800,
+    color: "#1d2430",
+    letterSpacing: "-0.02em",
   },
 
-  resultShareWrap: {
-    marginTop: 18,
-    paddingTop: 16,
-    borderTop: "1px solid #eaeaea",
+  cardRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "28px",
   },
 
-  resultShareText: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 10,
+  infoCard: {
+    background: "#fff",
+    borderRadius: "20px",
+    padding: "26px 28px",
+    boxShadow: "0 12px 28px rgba(0,0,0,0.08)",
   },
 
-  shareButtonPrimary: {
-    width: "100%",
-    padding: 14,
-    background: "#111",
+  infoCardHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    marginBottom: "16px",
+  },
+
+  infoIcon: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "999px",
     color: "#fff",
-    borderRadius: 10,
-    border: "none",
-    cursor: "pointer",
-    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px",
+    fontWeight: 800,
+    flexShrink: 0,
+  },
+
+  infoTitle: {
+    margin: 0,
+    fontSize: "22px",
+    lineHeight: 1.2,
+    fontWeight: 800,
+    color: "#1f2430",
+  },
+
+  infoText: {
+    margin: 0,
+    fontSize: "18px",
+    lineHeight: 1.55,
+    color: "#4f5663",
+  },
+
+  photoCardRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "28px",
+  },
+
+  audienceCard: {
+    overflow: "hidden",
+    background: "#fff",
+    borderRadius: "20px",
+    boxShadow: "0 12px 28px rgba(0,0,0,0.08)",
+  },
+
+  audienceImage: {
+    display: "block",
+    width: "100%",
+    height: "230px",
+    objectFit: "cover",
+  },
+
+  audienceBody: {
+    padding: "18px 22px 22px",
+  },
+
+  audienceTitleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "12px",
+  },
+
+  audienceTitle: {
+    margin: 0,
+    fontSize: "22px",
+    lineHeight: 1.2,
+    fontWeight: 800,
+    color: "#1f2430",
+  },
+
+  audienceText: {
+    margin: 0,
+    fontSize: "18px",
+    lineHeight: 1.5,
+    color: "#555d69",
+  },
+
+  aboutSection: {
+    padding: "38px 0 72px",
+    background: "#f3f3f3",
+  },
+
+  aboutBox: {
+    display: "grid",
+    gridTemplateColumns: "1.45fr 0.95fr",
+    gap: "28px",
+    borderRadius: "22px",
+    overflow: "hidden",
+    background:
+      "linear-gradient(135deg, rgba(11,84,108,0.96), rgba(18,120,140,0.88))",
+    boxShadow: "0 16px 34px rgba(0,0,0,0.1)",
+  },
+
+  aboutContent: {
+    padding: "42px 40px 44px",
+    color: "#fff",
+  },
+
+  aboutTitle: {
+    margin: 0,
+    fontSize: "30px",
+    lineHeight: 1.2,
+    fontWeight: 800,
+  },
+
+  aboutText: {
+    marginTop: "18px",
+    maxWidth: "620px",
+    fontSize: "18px",
+    lineHeight: 1.7,
+    color: "rgba(255,255,255,0.92)",
+  },
+
+  aboutImageWrap: {
+    minHeight: "100px",
+    background: "rgba(255,255,255,0.08)",
+  },
+
+  aboutImage: {
+    width: "100%",
+    height: "100%",
+    minHeight: "280px",
+    objectFit: "cover",
+    display: "block",
   },
 };
