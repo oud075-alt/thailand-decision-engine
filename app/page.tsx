@@ -697,7 +697,7 @@ useEffect(() => {
     const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}. Extra preference: ${extraPreference}`;
 
     try {
-      const res = await fetch("/api/ask", {
+      const res = await fetch("/api/decision", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -807,7 +807,7 @@ useEffect(() => {
       setPrepLoading(true);
       setPrepResult(null);
 
-      const res = await fetch("/api/ai-ask", {
+      const res = await fetch("/api/decision", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
