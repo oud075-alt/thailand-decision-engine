@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { supabase } from "@/lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
 
 type TabKey = "home" | "content" | "advisory" | "decision" | "prep" | "create";
 type PostType = "content" | "advisory";
@@ -422,6 +423,11 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const [selectedPost, setSelectedPost] = useState<DbPost | null>(null);
 
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -547,6 +553,26 @@ export default function HomePage() {
 
   useEffect(() => {
   loadPosts();
+}, []);
+
+useEffect(() => {
+  let mounted = true;
+
+  supabase.auth.getUser().then(({ data }) => {
+    if (!mounted) return;
+    setAuthUser(data.user ?? null);
+  });
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    setAuthUser(session?.user ?? null);
+  });
+
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
 }, []);
 
 useEffect(() => {

@@ -15,7 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 // are set in the deployment environment.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 // Validate an email address using a simple regex. Trims and lowercases
