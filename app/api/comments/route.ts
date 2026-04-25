@@ -43,10 +43,39 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { post_id, comment } = body;
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : "";
 
-    if (!post_id || !comment) {
+    if (!token) {
+      return NextResponse.json(
+        { error: "Please login with your email before commenting." },
+        { status: 401 }
+      );
+    }
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user?.id || !user.email) {
+      return NextResponse.json(
+        { error: "Invalid login session. Please login again." },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+
+    const postId =
+      typeof body.post_id === "string" ? body.post_id.trim() : "";
+
+    const comment =
+      typeof body.comment === "string" ? body.comment.trim() : "";
+
+    if (!postId || !comment) {
       return NextResponse.json(
         { error: "Missing post_id or comment" },
         { status: 400 }
@@ -57,11 +86,13 @@ export async function POST(req: Request) {
       .from("post_comments")
       .insert([
         {
-          post_id,
+          post_id: postId,
           comment,
+          user_id: user.id,
+          user_email: user.email,
         },
       ])
-      .select("id, post_id, comment, created_at")
+      .select("id, post_id, comment, created_at, user_id, user_email")
       .single();
 
     if (error) {
