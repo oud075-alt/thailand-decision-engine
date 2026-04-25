@@ -2347,7 +2347,7 @@ const styles = {
     position: "absolute",
     inset: 0,
     backgroundImage:
-      "linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('/images/echoes-hero.jpg')",
+  "linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('/Images/echoes-hero.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
