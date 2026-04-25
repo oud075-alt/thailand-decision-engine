@@ -913,27 +913,55 @@ useEffect(() => {
   };
 
   const submitComment = async () => {
-    if (!selectedPost || !commentText.trim()) return;
-    try {
-      setSubmittingComment(true);
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          post_id: selectedPost.id,
-          comment: commentText,
-        }),
-      });
-      if (res.ok) {
-        setCommentText("");
-        await loadCommentsByPostId(selectedPost.id);
-      }
-    } catch (error) {
-      console.error("SUBMIT_COMMENT_ERROR:", error);
-    } finally {
-      setSubmittingComment(false);
+  const trimmed = commentText.trim();
+
+  if (!authUser?.email) {
+    alert("Please login with your email before commenting.");
+    return;
+  }
+
+  if (!selectedPost || !trimmed) return;
+
+  try {
+    setSubmittingComment(true);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      alert("Please login with your email before commenting.");
+      return;
     }
-  };
+
+    const res = await fetch("/api/comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        post_id: selectedPost.id,
+        comment: trimmed,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data?.error || "Could not post comment.");
+      return;
+    }
+
+    setCommentText("");
+    await loadCommentsByPostId(selectedPost.id);
+  } catch (error) {
+    console.error("SUBMIT_COMMENT_ERROR:", error);
+    alert("Could not post comment.");
+  } finally {
+    setSubmittingComment(false);
+  }
+};
 
   const deleteComment = async (commentId: number, adminSecret: string) => {
     // Guard: only allow admin to delete comments
