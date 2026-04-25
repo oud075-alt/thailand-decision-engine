@@ -1812,21 +1812,91 @@ useEffect(() => {
 
                     {/* Comment Input Form */}
                     <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #e5e7eb" }}>
-                      <textarea
-                        data-comment-input
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Share your thoughts..."
-                        style={styles.commentInput}
-                      />
-                      <button
-                        type="button"
-                        onClick={submitComment}
-                        disabled={submittingComment || !commentText.trim()}
-                        style={styles.submitCommentBtn}
-                      >
-                        {submittingComment ? "Posting..." : "Post Comment"}
-                      </button>
+                      {!authUser?.email ? (
+  <div style={{ display: "grid", gap: 10 }}>
+    <p style={{ margin: 0, color: "#475569", fontSize: 14 }}>
+      Please login with your email before commenting.
+    </p>
+
+    <input
+      type="email"
+      value={authEmail}
+      onChange={(e) => setAuthEmail(e.target.value)}
+      placeholder="Enter your email to receive a login link"
+      style={{
+        width: "100%",
+        border: "1px solid #d1d5db",
+        borderRadius: 12,
+        padding: "12px 14px",
+        fontSize: 15,
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={handleEmailLogin}
+      disabled={authLoading || !authEmail.trim()}
+      style={styles.submitCommentBtn}
+    >
+      {authLoading ? "Sending login link..." : "Login with Email"}
+    </button>
+
+    {authMessage && (
+      <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
+        {authMessage}
+      </p>
+    )}
+  </div>
+) : (
+  <>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 10,
+      }}
+    >
+      <p style={{ margin: 0, color: "#475569", fontSize: 14 }}>
+        Commenting as <strong>{authUser.email}</strong>
+      </p>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        style={{
+          border: "1px solid #d1d5db",
+          borderRadius: 999,
+          background: "#fff",
+          padding: "8px 12px",
+          cursor: "pointer",
+          color: "#334155",
+          fontWeight: 600,
+        }}
+      >
+        Logout
+      </button>
+    </div>
+
+    <textarea
+      data-comment-input
+      value={commentText}
+      onChange={(e) => setCommentText(e.target.value)}
+      placeholder="Share your thoughts..."
+      style={styles.commentInput}
+    />
+
+    <button
+      type="button"
+      onClick={submitComment}
+      disabled={submittingComment || !commentText.trim()}
+      style={styles.submitCommentBtn}
+    >
+      {submittingComment ? "Posting..." : "Post Comment"}
+    </button>
+  </>
+)}
                     </div>
                   </div>
 
