@@ -575,6 +575,46 @@ useEffect(() => {
   };
 }, []);
 
+const handleEmailLogin = async () => {
+  const email = authEmail.trim().toLowerCase();
+
+  if (!email) {
+    setAuthMessage("Please enter your email.");
+    return;
+  }
+
+  setAuthLoading(true);
+  setAuthMessage("");
+
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+      return;
+    }
+
+    setAuthMessage("Check your email for the login link.");
+  } catch (error) {
+    console.error("LOGIN_ERROR:", error);
+    setAuthMessage("Could not send login link.");
+  } finally {
+    setAuthLoading(false);
+  }
+};
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setAuthUser(null);
+  setAuthEmail("");
+  setAuthMessage("");
+};
+
 useEffect(() => {
   if (!posts.length) return;
 
