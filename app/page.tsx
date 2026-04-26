@@ -465,6 +465,7 @@ export default function HomePage() {
   // Admin mode state
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminInput, setAdminInput] = useState("");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminSecret, setAdminSecret] = useState("");
 
   function handleAdminLogin() {
@@ -2039,32 +2040,49 @@ useEffect(() => {
               </>
             ) : (
               <div style={styles.adminLoginBox}>
-                <div style={styles.sideTitle}>Admin mode</div>
-                <p style={styles.sideText}>
-                  Login to create, edit, or delete posts.
-                </p>
-                <input
-                  type="password"
-                   value={adminInput}
-                   onChange={(e) => setAdminInput(e.target.value)}
-                   onFocus={() => setAdminInput("")}
-                   onClick={() => setAdminInput("")}
-                   placeholder="Admin password"
-                   autoComplete="off"
-                   name="echoes_admin_access_code_not_saved"
-                   id="echoes_admin_access_code_not_saved"
-                   data-lpignore="true"
-                   data-form-type="other"
-                   style={styles.input}
-                  />
-                <button
-                  type="button"
-                  style={styles.sideLinkPrimary}
-                  onClick={handleAdminLogin}
-                >
-                  Login
-                </button>
-              </div>
+  <div style={styles.sideTitle}>Admin mode</div>
+  <p style={styles.sideText}>
+    Login to create, edit, or delete posts.
+  </p>
+
+  {!showAdminLogin ? (
+    <button
+      type="button"
+      style={styles.sideLinkPrimary}
+      onClick={() => {
+        setAdminInput("");
+        setShowAdminLogin(true);
+      }}
+    >
+      Admin login
+    </button>
+  ) : (
+    <>
+      <input
+        type="password"
+        value={adminInput}
+        onChange={(e) => setAdminInput(e.target.value)}
+        onFocus={() => setAdminInput("")}
+        onClick={() => setAdminInput("")}
+        placeholder="Admin password"
+        autoComplete="off"
+        name="echoes_admin_access_code_not_saved"
+        id="echoes_admin_access_code_not_saved"
+        data-lpignore="true"
+        data-form-type="other"
+        style={styles.input}
+      />
+
+      <button
+        type="button"
+        style={styles.sideLinkPrimary}
+        onClick={handleAdminLogin}
+      >
+        Login
+      </button>
+    </>
+  )}
+</div>
             )}
           </aside>
         </section>
