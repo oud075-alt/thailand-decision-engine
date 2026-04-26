@@ -696,18 +696,19 @@ useEffect(() => {
 
     const question = `Help me decide where to stay in ${province}. I have ${days}, traveling as ${travelType}, budget ${budget}, style ${style}, concern ${concern}. Extra preference: ${extraPreference}`;
 
-    try {
-      const res = await fetch("/api/decision", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question,
-          province,
-          language: "English",
-        }),
-      });
+      try {
+  const res = await fetch("/api/decision", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      question,
+      province,
+      language: "English",
+    }),
+  });
+
 
       const data = await res.json();
       setResult(data.result || null);
@@ -1131,13 +1132,8 @@ useEffect(() => {
           <div style={styles.heroImage} />
           <div style={styles.heroOverlay} />
           <div style={styles.heroContent}>
-            <div style={styles.heroBadge}>A living page about Thailand</div>
-            <h1 style={styles.heroTitle} className="hero-title">Echoes Of Thailand</h1>
-            <p style={styles.heroText} className="hero-text">
-              A page about what remains after the trip — atmosphere, fragments,
-              feelings, beauty, confusion, warnings, reflections, and the parts
-              of Thailand people keep replaying in their minds.
-            </p>
+            
+            
           </div>
         </section>
 
@@ -2347,7 +2343,7 @@ const styles = {
     position: "absolute",
     inset: 0,
     backgroundImage:
-  "linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('/Images/echoes-hero.jpg')",
+  "linear-gradient(hsla(0, 0%, 0%, 0.00), rgba(0, 0, 0, 0)), url('/Images/echoes-hero.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
@@ -2358,7 +2354,7 @@ const styles = {
     position: "absolute",
     inset: 0,
     background:
-      "linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.28) 45%, rgba(0,0,0,.5) 100%)",
+      "linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0) 100%)",
     zIndex: 1,
   } as CSSProperties,
 
