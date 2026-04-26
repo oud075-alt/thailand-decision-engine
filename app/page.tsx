@@ -807,7 +807,7 @@ useEffect(() => {
       setPrepLoading(true);
       setPrepResult(null);
 
-      const res = await fetch("/api/decision", {
+      const res = await fetch("/api/ai-ask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
