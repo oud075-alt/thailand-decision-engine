@@ -554,7 +554,15 @@ export default function HomePage() {
   useEffect(() => {
   loadPosts();
 }, []);
+useEffect(() => {
+  setAdminInput("");
 
+  const timer = window.setTimeout(() => {
+    setAdminInput("");
+  }, 500);
+
+  return () => window.clearTimeout(timer);
+}, []);
 useEffect(() => {
   let mounted = true;
 
@@ -2037,11 +2045,18 @@ useEffect(() => {
                 </p>
                 <input
                   type="password"
-                  value={adminInput}
-                  onChange={(e) => setAdminInput(e.target.value)}
-                  placeholder="Admin password"
-                  style={styles.input}
-                />
+                   value={adminInput}
+                   onChange={(e) => setAdminInput(e.target.value)}
+                   onFocus={() => setAdminInput("")}
+                   onClick={() => setAdminInput("")}
+                   placeholder="Admin password"
+                   autoComplete="off"
+                   name="echoes_admin_access_code_not_saved"
+                   id="echoes_admin_access_code_not_saved"
+                   data-lpignore="true"
+                   data-form-type="other"
+                   style={styles.input}
+                  />
                 <button
                   type="button"
                   style={styles.sideLinkPrimary}
