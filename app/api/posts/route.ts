@@ -46,11 +46,11 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabase.from("posts").insert([
   {
-    title,
-    content,
-    image_url: image_url || "",
-    
-  },
+  title,
+  content,
+  image_url: image_url || "",
+  type: type === "advisory" ? "advisory" : "content",
+}
 ]);
 
     if (error) {
