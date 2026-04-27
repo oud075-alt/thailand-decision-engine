@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     title,
     content,
     image_url: image_url || "",
-    type: type === "advisory" ? "advisory" : "content",
+    
   },
 ]);
 
