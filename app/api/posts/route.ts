@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, content, image_url } = body;
+    const { title, content, image_url, type } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -45,11 +45,11 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabase.from("posts").insert([
       {
-        title,
-        content,
-        image_url: image_url || "",
-      },
-    ]);
+         title,
+         content,
+         image_url: image_url || "",
+         type: type === "advisory" ? "advisory" : "content",
+      }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
