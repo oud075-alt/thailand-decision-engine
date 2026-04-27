@@ -3194,11 +3194,15 @@ const styles = {
   } as CSSProperties,
 
   commentCard: {
-    background: "#f9fafb",
-    border: "1px solid #e5e7eb",
-    borderRadius: 14,
-    padding: 14,
-  } as CSSProperties,
+  background: "#f9fafb",
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 14,
+
+  width: "100%",
+  boxSizing: "border-box",
+  overflow: "hidden",   // กันล้นกรอบ
+} as CSSProperties,
 
   commentMeta: {
     display: "flex",
@@ -3214,10 +3218,14 @@ const styles = {
   } as CSSProperties,
 
   commentText: {
-    fontSize: 14,
-    color: "#374151",
-    lineHeight: 1.7,
-  } as CSSProperties,
+  fontSize: 14,
+  color: "#374151",
+  lineHeight: 1.7,
+  whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  wordWrap: "break-word",   // 👈 เพิ่มตัวนี้
+} as CSSProperties,
 
   resultWrap: {
     display: "grid",
@@ -3399,11 +3407,15 @@ const styles = {
     color: "#111827",
   } as CSSProperties,
   commentItem: {
-    padding: 12,
-    background: "#f9fafb",
-    borderRadius: 8,
-    borderLeft: "3px solid #2563eb",
-  } as CSSProperties,
+  padding: 12,
+  background: "#f9fafb",
+  borderRadius: 8,
+  borderLeft: "3px solid #2563eb",
+
+  maxWidth: "100%",
+  overflow: "hidden",
+  wordBreak: "break-word",
+} as CSSProperties,
   deleteCommentBtn: {
     background: "#ef4444",
     color: "#fff",
