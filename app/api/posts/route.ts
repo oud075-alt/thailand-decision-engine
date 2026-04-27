@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabase";
+import { getSupabaseAdmin } from "../../../lib/supabase";
+const supabase = getSupabaseAdmin();
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -44,12 +45,13 @@ export async function POST(req: Request) {
     }
 
     const { data, error } = await supabase.from("posts").insert([
-      {
-         title,
-         content,
-         image_url: image_url || "",
-         type: type === "advisory" ? "advisory" : "content",
-      }
+  {
+    title,
+    content,
+    image_url: image_url || "",
+    type: type === "advisory" ? "advisory" : "content",
+  },
+]);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
