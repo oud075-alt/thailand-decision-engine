@@ -3340,13 +3340,15 @@ const styles = {
   } as CSSProperties,
 
   modalImage: {
-    width: "100%",
-    height: 420,
-    objectFit: "cover",
-    display: "block",
-  } as CSSProperties,
-
-  modalTopMeta: {
+  width: "100%",
+  height: "auto",
+  maxHeight: "80vh",
+  objectFit: "contain",
+  display: "block",
+  background: "#000",
+} as CSSProperties,
+  
+   modalTopMeta: {
     display: "flex",
     justifyContent: "space-between",
     gap: 10,
