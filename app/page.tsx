@@ -65,6 +65,8 @@ type PostComment = {
   post_id: string;
   comment: string;
   created_at: string;
+
+  image_url?: string | null; // ✅ เพิ่มบรรทัดนี้
 };
 type PrepResult = {
   bestMatch: {
@@ -768,8 +770,9 @@ useEffect(() => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          province,
-          comment: trimmed,
+          post_id: selectedPost.id,
+          comment: commentText,
+          image_url: commentImage,
         }),
       });
 
@@ -906,6 +909,7 @@ useEffect(() => {
 
   const [commentPost, setCommentPost] = useState<DbPost | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [commentImage, setCommentImage] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const handlePostComment = (post: DbPost | null) => {
@@ -948,8 +952,10 @@ useEffect(() => {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        post_id: selectedPost.id,
-        comment: trimmed,
+       post_id: selectedPost.id,
+       comment: trimmed,
+       image_url: commentImage, // 🔥 เพิ่มบรรทัดนี้
+
       }),
     });
 
@@ -961,6 +967,7 @@ useEffect(() => {
     }
 
     setCommentText("");
+    setCommentImage("");
     await loadCommentsByPostId(selectedPost.id);
   } catch (error) {
     console.error("SUBMIT_COMMENT_ERROR:", error);
@@ -1791,6 +1798,21 @@ useEffect(() => {
                         postComments[selectedPost.id].map((comment) => (
                           <div key={comment.id} style={styles.commentItem}>
                             <p style={styles.commentText}>{comment.comment}</p>
+
+                             {comment.image_url && (
+                             <img
+                              src={comment.image_url}
+                              alt="Comment image"
+                              style={{
+                              width: "100%",
+                               maxHeight: 320,
+                               objectFit: "contain",
+                               borderRadius: 12,
+                               marginTop: 10,
+                               background: "#000",
+                              }}
+                             />
+                          )}
                             <div style={styles.commentMeta}>
                               <span style={styles.commentTime}>
                                 {formatTimeLabel(comment.created_at)}
@@ -1882,12 +1904,24 @@ useEffect(() => {
     </div>
 
     <textarea
-      data-comment-input
-      value={commentText}
-      onChange={(e) => setCommentText(e.target.value)}
-      placeholder="Share your thoughts..."
-      style={styles.commentInput}
-    />
+  data-comment-input
+  value={commentText}
+  onChange={(e) => setCommentText(e.target.value)}
+  placeholder="Share your thoughts..."
+  style={styles.commentInput}
+/>
+
+<input
+  type="text"
+  value={commentImage}
+  onChange={(e) => setCommentImage(e.target.value)}
+  placeholder="Paste image URL here (optional)"
+  style={{
+    ...styles.commentInput,
+    marginTop: 10,
+    height: 40,
+  }}
+/>
 
     <button
       type="button"

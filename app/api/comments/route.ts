@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
     const { data, error } = await supabase
       .from("post_comments")
-      .select("id, post_id, comment, created_at")
+      .select("id, post_id, comment, image_url, created_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: false });
 
@@ -28,12 +28,9 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({
-      comments: data || [],
-    });
+    return NextResponse.json({ comments: data || [] });
   } catch (error) {
     console.error("COMMENTS_GET_ERROR:", error);
-
     return NextResponse.json(
       { error: "Failed to load comments", comments: [] },
       { status: 500 }
@@ -75,6 +72,9 @@ export async function POST(req: Request) {
     const comment =
       typeof body.comment === "string" ? body.comment.trim() : "";
 
+    const imageUrl =
+      typeof body.image_url === "string" ? body.image_url.trim() : "";
+
     if (!postId || !comment) {
       return NextResponse.json(
         { error: "Missing post_id or comment" },
@@ -88,18 +88,16 @@ export async function POST(req: Request) {
         {
           post_id: postId,
           comment,
+          image_url: imageUrl || null,
           user_id: user.id,
           user_email: user.email,
         },
       ])
-      .select("id, post_id, comment, created_at, user_id, user_email")
+      .select("id, post_id, comment, image_url, created_at, user_id, user_email")
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -108,25 +106,19 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("COMMENTS_POST_ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Invalid request" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
+
 export async function DELETE(req: Request) {
   try {
     const body = await req.json();
     const { id, adminSecret } = body;
 
-    // Simple admin check
     const expectedSecret = process.env.ADMIN_SECRET || "admin123";
+
     if (adminSecret !== expectedSecret) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     if (!id) {
