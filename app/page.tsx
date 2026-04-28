@@ -35,6 +35,7 @@ type DbPost = {
   image_url: string | null;
   created_at: string;
   type?: string | null;
+  affiliate_url?: string | null;
 };
 
 type DecisionOption = {
@@ -389,15 +390,9 @@ function extractPlace(text: string) {
 }
 
 function getAgodaUrl(province: string) {
-  const map: Record<string, string> = {
-    Krabi: "https://www.agoda.com/city/krabi-th.html",
-    Phuket: "https://www.agoda.com/city/phuket-th.html",
-    Bangkok: "https://www.agoda.com/city/bangkok-th.html",
-    Pattaya: "https://www.agoda.com/city/pattaya-th.html",
-    "Koh Samui": "https://www.agoda.com/city/koh-samui-th.html",
-  };
+  const keyword = encodeURIComponent(`${province} Thailand`);
 
-  return map[province] || "https://www.agoda.com/";
+  return `https://www.agoda.com/partners/partnersearch.aspx?pcs=1&cid=1963006&hl=en-us&searchText=${keyword}`;
 }
 
 function mapPostToCard(post: DbPost, index: number): FeedCard {
@@ -431,6 +426,7 @@ export default function HomePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [affiliateUrl, setAffiliateUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedLoading, setFeedLoading] = useState(true);
   const [posts, setPosts] = useState<DbPost[]>([]);
@@ -662,18 +658,19 @@ useEffect(() => {
 
     try {
       const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          content: content.trim(),
-          image_url: imageUrl.trim(),
-          type,
-          adminSecret,
-        }),
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    title: title.trim(),
+    content: content.trim(),
+    image_url: imageUrl.trim(),
+    affiliate_url: affiliateUrl.trim(),
+    type,
+    adminSecret,
+  }),
+ });
 
       const data = await res.json();
 
@@ -1995,11 +1992,19 @@ useEffect(() => {
                       style={styles.input}
                     />
                     <textarea
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Content"
-                      style={styles.textarea}
-                    />
+                       value={content}
+                       onChange={(e) => setContent(e.target.value)}
+                       placeholder="Content"
+                       style={styles.textarea}
+                      />
+
+                     <input
+                       type="text"
+                      placeholder="Affiliate link (optional)"
+                       value={affiliateUrl}
+                        onChange={(e) => setAffiliateUrl(e.target.value)}
+                         style={styles.input}
+                     />
                     <input
                       type="text"
                       value={imageUrl}
@@ -2163,7 +2168,12 @@ function SocialPostCard({
         onClick={onCardClick}
         style={styles.postCardImageButton}
       >
-        <img src={card.image} alt={card.title} style={styles.postImage} className="post-image" />
+        <img
+          src={card.image}
+          alt={card.title}
+          style={styles.postImage}
+          className="post-image"
+        />
       </button>
 
       <div style={styles.postBody}>
@@ -2210,10 +2220,33 @@ function SocialPostCard({
             Read post
           </button>
         </div>
+
+        {/* 🔥 Affiliate Button */}
+        {post?.affiliate_url && (
+  <a
+    href={post.affiliate_url}
+    target="_blank"
+    rel="noopener noreferrer nofollow"
+    style={{
+      display: "block",
+      marginTop: 12,
+      padding: "12px 16px",
+      borderRadius: 12,
+      background: "#16a34a",
+      color: "#fff",
+      fontWeight: 700,
+      textAlign: "center",
+      textDecoration: "none",
+    }}
+  >
+    🔗 Book Now
+  </a>
+)}
       </div>
     </article>
   );
 }
+
 
 function StructuredResult({
   result,
@@ -2279,13 +2312,13 @@ function StructuredResult({
       )}
 
       <div style={styles.agodaButtonWrap}>
-        <a
-          href={getAgodaUrl(province)}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.agodaButton}
-        >
-          Find hotels in {province} on Agoda
+  <a
+    href={getAgodaUrl(province)}
+    target="_blank"
+    rel="noopener noreferrer nofollow"
+    style={styles.agodaButton}
+  >
+    Find hotels in {province} on Agoda
         </a>
       </div>
     </div>

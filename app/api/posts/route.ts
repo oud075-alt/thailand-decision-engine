@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, content, image_url, type } = body;
+    const { title, content, image_url, type, affiliate_url } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -45,21 +45,22 @@ export async function POST(req: Request) {
     }
 
     const { data, error } = await supabase.from("posts").insert([
-  {
-  title,
-  content,
-  image_url: image_url || "",
-  type: type === "advisory" ? "advisory" : "content",
-}
-]);
+      {
+        title,
+        content,
+        image_url: image_url || "",
+        type,
+        affiliate_url: affiliate_url || "", 
+      },
+    ]);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ data });
-  } catch {
-    return NextResponse.json({ error: "invalid request" }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 export async function DELETE(req: Request) {
